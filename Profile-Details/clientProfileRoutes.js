@@ -12,7 +12,7 @@ router.get('/client/:clientId/profile-settings', identifier, clientProfileContro
 router.get('/client/:clientId/profile', identifier, clientProfileController.getClientHeaderInfo);
 
 router.get('/client/:clientId/profile/basic-details', identifier, clientProfileController.getClientBasicDetails);
-router.put('/client/:clientId/profile/basic-details', identifier, clientProfileController.updateBasicDetails);
+router.put('/client/:clientId/profile/basic-details', identifier, clientProfileController.updateClientBasicDetails);
 
 router.get('/client/:clientId/profile/picture', identifier, clientProfileController.getClientProfilePicture);
 router.put('/client/:clientId/profile/picture', identifier, clientProfileController.updateClientProfilePicture);

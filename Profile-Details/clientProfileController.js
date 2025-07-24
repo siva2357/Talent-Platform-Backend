@@ -1,44 +1,68 @@
 const Client = require('../Authentication/clientModel');
 const ClientProfile = require('../Profile-Details/clientProfileModel');
 
-// CREATE
+
 exports.createClientProfile = async (req, res) => {
   try {
+    // Check if client is authenticated
     if (!req.clientId) {
-      return res.status(401).json({ message: "Unauthorized: Client ID is missing" });
+      return res.status(401).json({ message: "Unauthorized: Client ID missing" });
     }
 
+    // Ensure client exists
     const client = await Client.findById(req.clientId);
-    if (!client) return res.status(404).json({ message: "Client not found" });
+    if (!client) {
+      return res.status(404).json({ message: "Client not found" });
+    }
 
+    // Check if profile already exists
     const existingProfile = await ClientProfile.findOne({ clientId: req.clientId });
-    if (existingProfile) return res.status(400).json({ message: "Profile already exists" });
+    if (existingProfile) {
+      return res.status(400).json({ message: "Client profile already exists" });
+    }
 
+    // Extract default values from registration (if available)
     const { email, fullName, userName } = client.registrationDetails || {};
+
+    // Compose full profileDetails matching schema
     const profileDetails = {
-      profilePicture: req.body.profileDetails.profilePicture || {},
-      fullName: fullName || req.body.profileDetails.fullName,
-      userName: userName || req.body.profileDetails.userName,
-      email: email || req.body.profileDetails.email ,
+      profilePicture: {
+        fileName: req.body.profileDetails.profilePicture?.fileName,
+        url: req.body.profileDetails.profilePicture?.url
+      },
+      fullName: fullName,
+      userName: userName,
+      email: email,
       gender: req.body.profileDetails.gender,
+      dob: req.body.profileDetails.dob,
+      phoneNumber: req.body.profileDetails.phoneNumber,
+      address: req.body.profileDetails.address,
       bioDescription: req.body.profileDetails.bioDescription,
+      companyName: req.body.profileDetails.companyName,
+      designation: req.body.profileDetails.designation,
+      experience: req.body.profileDetails.experience,
       socialMedia: req.body.profileDetails.socialMedia || [],
     };
 
+    // Save profile
     const newProfile = new ClientProfile({
       clientId: req.clientId,
       profileDetails
     });
 
     await newProfile.save();
-    res.status(201).json({ message: "Client profile created", clientProfile: newProfile });
+
+    res.status(201).json({ message: "Client profile created successfully", clientProfile: newProfile });
   } catch (error) {
-    console.error("Create profile error:", error);
+    console.error("Create Client Profile Error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
+
+
 // GET PROFILE BY CLIENT ID
+// GET BY CLIENT ID
 exports.getClientProfile = async (req, res) => {
   try {
     const clientId = req.params.clientId;
@@ -51,9 +75,10 @@ exports.getClientProfile = async (req, res) => {
       return res.status(404).json({ message: "Client profile not found" });
     }
 
-    profile.profileDetails.email = client.registrationDetails.email;
-    profile.profileDetails.fullName = client.registrationDetails.fullName;
-    profile.profileDetails.userName = client.registrationDetails.userName;
+    const { email, fullName, userName } = client.registrationDetails || {};
+    profile.profileDetails.email = email;
+    profile.profileDetails.fullName = fullName;
+    profile.profileDetails.userName = userName;
 
     res.status(200).json(profile);
   } catch (error) {
@@ -62,6 +87,8 @@ exports.getClientProfile = async (req, res) => {
   }
 };
 
+
+// UPDATE
 // UPDATE
 exports.updateClientProfile = async (req, res) => {
   try {
@@ -76,17 +103,20 @@ exports.updateClientProfile = async (req, res) => {
       return res.status(404).json({ message: "Client profile not found" });
     }
 
-    const { profileDetails } = req.body;
-    if (!profileDetails) return res.status(400).json({ message: "Profile details required" });
+    const updatedDetails = req.body.profileDetails;
+    if (!updatedDetails) {
+      return res.status(400).json({ message: "Profile details required" });
+    }
 
-    // Remove protected fields
-    delete profileDetails.email;
-    delete profileDetails.fullName;
-    delete profileDetails.userName;
+    // Block any attempt to overwrite primary fields
+    delete updatedDetails.email;
+    delete updatedDetails.fullName;
+    delete updatedDetails.userName;
 
+    // Merge allowed fields only
     profile.profileDetails = {
       ...profile.profileDetails,
-      ...profileDetails
+      ...updatedDetails
     };
 
     await profile.save();
@@ -96,6 +126,7 @@ exports.updateClientProfile = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 
 exports.getClientById = async (req, res) => {
@@ -127,50 +158,119 @@ exports.deleteClientById = async (req, res) => {
 };
 
 // BASIC INFO
+// GET: Fetch Client Basic Details
 exports.getClientBasicDetails = async (req, res) => {
   try {
     const clientId = req.params.clientId;
-    const client = await Client.findById(clientId);
+
     const profile = await ClientProfile.findOne({ clientId });
+    if (!profile) {
+      return res.status(404).json({ message: "Client profile not found" });
+    }
 
-    if (!client || !profile) return res.status(404).json({ message: "Client or profile not found" });
+    const pd = profile.profileDetails;
 
-    const basicDetails = {
-      fullName: client.registrationDetails.fullName,
-      userName: client.registrationDetails.userName,
-      email: client.registrationDetails.email,
-      gender: profile.profileDetails.gender,
-      bioDescription: profile.profileDetails.bioDescription,
-    };
-
-    res.status(200).json(basicDetails);
+    res.status(200).json({
+      fullName: pd.fullName,
+      userName: pd.userName,
+      email: pd.email,
+      gender: pd.gender,
+      dob: pd.dob,
+      phoneNumber: pd.phoneNumber,
+      address: pd.address,
+      bioDescription: pd.bioDescription,
+      companyName: pd.companyName,
+      designation: pd.designation,
+      experience: pd.experience,
+      socialMedia: pd.socialMedia,
+      profilePicture: pd.profilePicture,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
 
-exports.updateBasicDetails = async (req, res) => {
+// PUT: Update Client Basic Details
+exports.updateClientBasicDetails = async (req, res) => {
   try {
     const clientId = req.params.clientId;
-    const { userName, gender, bioDescription } = req.body;
 
-    const client = await Client.findById(clientId);
+    const {
+      fullName,
+      userName,
+      email,
+      gender,
+      dob,
+      phoneNumber,
+      address,
+      bioDescription,
+      companyName,
+      designation,
+      experience,
+      socialMedia,
+      profilePicture,
+    } = req.body;
+
+    // Validate required fields
+    const requiredFields = {
+      fullName,
+      userName,
+      email,
+      gender,
+      dob,
+      phoneNumber,
+      address,
+      bioDescription,
+      companyName,
+      designation,
+      experience,
+      socialMedia,
+      profilePicture,
+    };
+
+    for (const [key, value] of Object.entries(requiredFields)) {
+      if (
+        value === undefined ||
+        value === null ||
+        (typeof value === "string" && value.trim() === "") ||
+        (Array.isArray(value) && value.length === 0)
+      ) {
+        return res.status(400).json({ message: `${key} is required` });
+      }
+    }
+
     const profile = await ClientProfile.findOne({ clientId });
+    if (!profile) {
+      return res.status(404).json({ message: "Client profile not found" });
+    }
 
-    if (!client || !profile) return res.status(404).json({ message: "Client or profile not found" });
+    const pd = profile.profileDetails;
 
-    if (userName) client.registrationDetails.userName = userName;
-    await client.save();
+    // Apply updates
+    pd.fullName = fullName;
+    pd.userName = userName;
+    pd.email = email;
+    pd.gender = gender;
+    pd.dob = dob;
+    pd.phoneNumber = phoneNumber;
+    pd.address = address;
+    pd.bioDescription = bioDescription;
+    pd.companyName = companyName;
+    pd.designation = designation;
+    pd.experience = experience;
+    pd.socialMedia = socialMedia;
+    pd.profilePicture = profilePicture;
 
-    if (gender) profile.profileDetails.gender = gender;
-    if (bioDescription) profile.profileDetails.bioDescription = bioDescription;
     await profile.save();
 
-    res.status(200).json({ message: "Basic details updated" });
+    res.status(200).json({ message: "Client profile updated successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
+
 
 // HEADER
 exports.getClientHeaderInfo = async (req, res) => {

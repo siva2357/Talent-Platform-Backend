@@ -21,13 +21,19 @@ exports.createFreelancerProfile = async (req, res) => {
       userName: userName || req.body.profileDetails.userName,
       email: email || req.body.profileDetails.email,
       gender: req.body.profileDetails.gender,
+      dob: req.body.profileDetails.dob,
+      phoneNumber: req.body.profileDetails.phoneNumber,
       bioDescription: req.body.profileDetails.bioDescription,
+      primarySkillset: req.body.profileDetails.primarySkillset,
+      experience: req.body.profileDetails.experience,
+      toolsAndTechnologies: req.body.profileDetails.toolsAndTechnologies || [],
+      portfolioLinks: req.body.profileDetails.portfolioLinks || [],
       socialMedia: req.body.profileDetails.socialMedia || [],
     };
 
     const newProfile = new FreelancerProfile({
       freelancerId: req.freelancerId,
-      profileDetails
+      profileDetails,
     });
 
     await newProfile.save();
@@ -37,6 +43,7 @@ exports.createFreelancerProfile = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 // GET PROFILE BY ID
 exports.getFreelancerProfile = async (req, res) => {
@@ -79,22 +86,24 @@ exports.updateFreelancerProfile = async (req, res) => {
     const { profileDetails } = req.body;
     if (!profileDetails) return res.status(400).json({ message: "Profile details required" });
 
+    // Prevent email/fullName/userName update from here
     delete profileDetails.email;
     delete profileDetails.fullName;
     delete profileDetails.userName;
 
     profile.profileDetails = {
       ...profile.profileDetails,
-      ...profileDetails
+      ...profileDetails,
     };
 
     await profile.save();
-    res.status(200).json(profile);
+    res.status(200).json({ message: "Profile updated successfully", profile });
   } catch (error) {
     console.error("Update profile error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 exports.getFreelancerById = async (req, res) => {
   try {
@@ -131,13 +140,16 @@ exports.getFreelancerBasicDetails = async (req, res) => {
     const freelancer = await Freelancer.findById(freelancerId);
     const profile = await FreelancerProfile.findOne({ freelancerId });
 
-    if (!freelancer || !profile) return res.status(404).json({ message: "Freelancer or profile not found" });
+    if (!freelancer || !profile)
+      return res.status(404).json({ message: "Freelancer or profile not found" });
 
     const basicDetails = {
       fullName: freelancer.registrationDetails.fullName,
       userName: freelancer.registrationDetails.userName,
       email: freelancer.registrationDetails.email,
       gender: profile.profileDetails.gender,
+      dob: profile.profileDetails.dob,
+      phoneNumber: profile.profileDetails.phoneNumber,
       bioDescription: profile.profileDetails.bioDescription,
     };
 
@@ -147,26 +159,86 @@ exports.getFreelancerBasicDetails = async (req, res) => {
   }
 };
 
-exports.updateBasicDetails = async (req, res) => {
+
+exports.updateFreelancerBasicDetails = async (req, res) => {
   try {
     const freelancerId = req.params.freelancerId;
-    const { userName, gender, bioDescription } = req.body;
+    const { userName, gender, dob, phoneNumber, bioDescription } = req.body;
 
     const freelancer = await Freelancer.findById(freelancerId);
     const profile = await FreelancerProfile.findOne({ freelancerId });
 
-    if (!freelancer || !profile) return res.status(404).json({ message: "Freelancer or profile not found" });
+    if (!freelancer || !profile)
+      return res.status(404).json({ message: "Freelancer or profile not found" });
 
     if (userName) freelancer.registrationDetails.userName = userName;
     await freelancer.save();
 
     if (gender) profile.profileDetails.gender = gender;
+    if (dob) profile.profileDetails.dob = dob;
+    if (phoneNumber) profile.profileDetails.phoneNumber = phoneNumber;
     if (bioDescription) profile.profileDetails.bioDescription = bioDescription;
     await profile.save();
 
     res.status(200).json({ message: "Basic details updated" });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+exports.getProfessionalDetails = async (req, res) => {
+  try {
+    const { freelancerId } = req.params;
+
+    const profile = await FreelancerProfile.findOne({ freelancerId });
+
+    if (!profile) {
+      return res.status(404).json({ message: "Freelancer profile not found" });
+    }
+
+    const professionalDetails = {
+      primarySkillset: profile.profileDetails.primarySkillset,
+      experience: profile.profileDetails.experience,
+      toolsAndTechnologies: profile.profileDetails.toolsAndTechnologies,
+      portfolioLinks: profile.profileDetails.portfolioLinks,
+      socialMedia: profile.profileDetails.socialMedia
+    };
+
+    res.status(200).json(professionalDetails);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching professional details", error });
+  }
+};
+
+exports.updateProfessionalDetails = async (req, res) => {
+  try {
+    const { freelancerId } = req.params;
+    const {
+      primarySkillset,
+      experience,
+      toolsAndTechnologies,
+      portfolioLinks,
+      socialMedia
+    } = req.body;
+
+    const profile = await FreelancerProfile.findOne({ freelancerId });
+
+    if (!profile) {
+      return res.status(404).json({ message: "Freelancer profile not found" });
+    }
+
+    profile.profileDetails.primarySkillset = primarySkillset;
+    profile.profileDetails.experience = experience;
+    profile.profileDetails.toolsAndTechnologies = toolsAndTechnologies;
+    profile.profileDetails.portfolioLinks = portfolioLinks;
+    profile.profileDetails.socialMedia = socialMedia;
+
+    await profile.save();
+
+    res.status(200).json({ message: "Professional details updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating professional details", error });
   }
 };
 
@@ -197,38 +269,7 @@ exports.getFreelancerHeaderInfo = async (req, res) => {
 };
 
 
-// SOCIAL MEDIA
-exports.getFreelancerSocialMedia = async (req, res) => {
-  try {
-    const freelancerId = req.params.freelancerId;
-    const profile = await FreelancerProfile.findOne({ freelancerId }, { 'profileDetails.socialMedia': 1, _id: 0 });
 
-    if (!profile) return res.status(404).json({ message: "Profile not found" });
-
-    res.status(200).json({ message: "Social media fetched", socialMedia: profile.profileDetails.socialMedia });
-  } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-exports.updateSocialMedia = async (req, res) => {
-  try {
-    const { socialMedia } = req.body;
-    if (!Array.isArray(socialMedia)) {
-      return res.status(400).json({ message: "Invalid format" });
-    }
-
-    const profile = await FreelancerProfile.findOne({ freelancerId: req.freelancerId });
-    if (!profile) return res.status(404).json({ message: "Profile not found" });
-
-    profile.profileDetails.socialMedia = socialMedia;
-    await profile.save();
-
-    res.status(200).json({ message: "Social media updated", socialMedia });
-  } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
 
 // PROFILE PICTURE
 exports.getFreelancerProfilePicture = async (req, res) => {

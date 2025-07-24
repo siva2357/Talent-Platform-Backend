@@ -14,15 +14,16 @@ router.get('/freelancer/:id/profile', identifier, freelancerProfileController.ge
 
 // Basic Details
 router.get('/freelancer/:freelancerId/profile/basic-details', identifier, freelancerProfileController.getFreelancerBasicDetails);
-router.put('/freelancer/:freelancerId/profile/basic-details', identifier, freelancerProfileController.updateBasicDetails);
+router.put('/freelancer/:freelancerId/profile/basic-details', identifier, freelancerProfileController.updateFreelancerBasicDetails);
 
 // Profile Picture
 router.get('/freelancer/:freelancerId/profile/picture', identifier, freelancerProfileController.getFreelancerProfilePicture);
 router.put('/freelancer/:freelancerId/profile/picture', identifier, freelancerProfileController.updateProfilePicture);
 
 // Social Media
-router.get('/freelancer/:freelancerId/profile/social-media', identifier, freelancerProfileController.getFreelancerSocialMedia);
-router.put('/freelancer/:freelancerId/profile/social-media', identifier, freelancerProfileController.updateSocialMedia);
+router.get('/freelancer/:freelancerId/profile/professional', identifier, freelancerProfileController.getProfessionalDetails);
+router.put('/freelancer/:freelancerId/profile/professional', identifier, freelancerProfileController.updateProfessionalDetails);
+
 
 // Delete
 router.delete('/auth/freelancer/:freelancerId/delete', identifier, freelancerProfileController.deleteFreelancerById);
