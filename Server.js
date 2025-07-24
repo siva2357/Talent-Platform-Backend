@@ -39,8 +39,8 @@ const freelanceAuthRoutes = require('./Authentication/freelanceRoutes');
 const freelancerProfileRoutes = require('./Profile-Details/freelancerProfileRoutes');
 const clientProfileRoutes = require('./Profile-Details/clientProfileRoutes');
 const otpVerificationRoutes = require('./Otp-Verification/otpVerificationRoutes');
-// const changePasswordRoutes = require('./Password/changePasswordRoutes');
-// const forgotPasswordRoutes = require('./Password/forgotPasswordRoutes');
+const changePasswordRoutes = require('./Password/changePasswordRoutes');
+const forgotPasswordRoutes = require('./Password/forgotPasswordRoutes');
 
 app.use('/api', adminAuthRoutes);
 app.use('/api', clientAuthRoutes);
@@ -49,8 +49,8 @@ app.use('/api', otpVerificationRoutes);
 app.use('/api', authRoutes);
 app.use('/api', clientProfileRoutes);
 app.use('/api', freelancerProfileRoutes);
-// app.use('/api', changePasswordRoutes);
-// app.use('/api', forgotPasswordRoutes);
+app.use('/api', changePasswordRoutes);
+app.use('/api', forgotPasswordRoutes);
 
 
 

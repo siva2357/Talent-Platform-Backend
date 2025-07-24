@@ -83,17 +83,19 @@ exports.updateFreelancerProfile = async (req, res) => {
       return res.status(404).json({ message: "Freelancer profile not found" });
     }
 
-    const { profileDetails } = req.body;
-    if (!profileDetails) return res.status(400).json({ message: "Profile details required" });
+    const updatedDetails = req.body.profileDetails;
+    if (!updatedDetails) {
+      return res.status(400).json({ message: "Profile details required" });
+    }
 
-    // Prevent email/fullName/userName update from here
-    delete profileDetails.email;
-    delete profileDetails.fullName;
-    delete profileDetails.userName;
+    // Block any attempt to overwrite primary fields
+    delete updatedDetails.email;
+    delete updatedDetails.fullName;
+    delete updatedDetails.userName;
 
     profile.profileDetails = {
       ...profile.profileDetails,
-      ...profileDetails,
+      ...updatedDetails
     };
 
     await profile.save();
