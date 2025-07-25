@@ -3,21 +3,8 @@ const mongoose = require('mongoose');
 const freelancerSchema = mongoose.Schema({
   registrationDetails: {
     fullName: { type: String, required: true },
-    userName: { type: String, unique: true, required: true },
-    email: {
-      type: String,
-      required: true,
-      trim: true,
-      unique: true,
-      minLength: [5, "Email must have at least 5 characters!"],
-      lowercase: true
-    },
-    password: {
-      type: String,
-      required: true,
-      trim: true,
-      select: false
-    },
+    email: { type: String, required: true, trim: true, unique: true, minLength: [5, "Email must have at least 5 characters!"], lowercase: true },
+    password: { type: String, required: true, trim: true, select: false },
     verified: { type: Boolean, default: false },
     verificationCode: { type: String, select: false },
     verificationCodeValidation: { type: Number, select: false },

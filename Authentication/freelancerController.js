@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 
 exports.signup = async (req, res) => {
   const { registrationDetails, role } = req.body;
-  const { fullName, userName, email, password } = registrationDetails;
+  const { fullName, email, password } = registrationDetails;
 
   try {
     const { error } = signupSchema.validate(req.body);
@@ -28,7 +28,6 @@ exports.signup = async (req, res) => {
     const newFreelancer = new Freelancer({
       registrationDetails: {
         fullName,
-        userName,
         email,
         password: hashedPassword
       },

@@ -22,7 +22,7 @@ exports.createClientProfile = async (req, res) => {
     }
 
     // Extract default values from registration (if available)
-    const { email, fullName, userName } = client.registrationDetails || {};
+    const { email, fullName} = client.registrationDetails || {};
 
     // Compose full profileDetails matching schema
     const profileDetails = {
@@ -31,7 +31,7 @@ exports.createClientProfile = async (req, res) => {
         url: req.body.profileDetails.profilePicture?.url
       },
       fullName: fullName,
-      userName: userName,
+      userName: req.body.profileDetails.userName,
       email: email,
       gender: req.body.profileDetails.gender,
       dob: req.body.profileDetails.dob,
@@ -111,7 +111,6 @@ exports.updateClientProfile = async (req, res) => {
     // Block any attempt to overwrite primary fields
     delete updatedDetails.email;
     delete updatedDetails.fullName;
-    delete updatedDetails.userName;
 
     // Merge allowed fields only
     profile.profileDetails = {
@@ -282,13 +281,11 @@ exports.getClientHeaderInfo = async (req, res) => {
     if (!client || !profile) return res.status(404).json({ message: "Client or profile not found" });
 
     const header = {
-      profile: {
         fullName: client.registrationDetails.fullName,
         profilePicture: {
           fileName: profile.profileDetails.profilePicture?.fileName || null,
           url: profile.profileDetails.profilePicture?.url || null
         }
-      }
     };
 
     res.status(200).json(header);
