@@ -9,8 +9,8 @@ router.put('/freelancer/:freelancerId/profile-details', identifier, freelancerPr
 router.get('/freelancer/:freelancerId/profile-details', identifier, freelancerProfileController.getFreelancerProfile);
 
 // Settings + Header Info
-router.get('/freelancer/:id/profile-settings', identifier, freelancerProfileController.getFreelancerById);
-router.get('/freelancer/:id/profile', identifier, freelancerProfileController.getFreelancerHeaderInfo);
+router.get('/freelancer/:freelancerId/profile-settings', identifier, freelancerProfileController.getFreelancerById);
+router.get('/freelancer/:freelancerId/profile', identifier, freelancerProfileController.getFreelancerHeaderInfo);
 
 // Basic Details
 router.get('/freelancer/:freelancerId/profile/basic-details', identifier, freelancerProfileController.getFreelancerBasicDetails);

@@ -14,20 +14,22 @@ exports.createFreelancerProfile = async (req, res) => {
     const existingProfile = await FreelancerProfile.findOne({ freelancerId: req.freelancerId });
     if (existingProfile) return res.status(400).json({ message: "Profile already exists" });
 
-    const { email, fullName, userName } = freelancer.registrationDetails || {};
+    const { email, fullName } = freelancer.registrationDetails || {};
     const profileDetails = {
-      profilePicture: req.body.profileDetails.profilePicture || {},
+      profilePicture: {
+        fileName: req.body.profileDetails.profilePicture?.fileName,
+        url: req.body.profileDetails.profilePicture?.url
+      },
       fullName: fullName || req.body.profileDetails.fullName,
-      userName: userName || req.body.profileDetails.userName,
       email: email || req.body.profileDetails.email,
+      userName: req.body.profileDetails.userName,
       gender: req.body.profileDetails.gender,
       dob: req.body.profileDetails.dob,
       phoneNumber: req.body.profileDetails.phoneNumber,
       bioDescription: req.body.profileDetails.bioDescription,
-      primarySkillset: req.body.profileDetails.primarySkillset,
+      primarySkillset: req.body.profileDetails.primarySkillset || [],
       experience: req.body.profileDetails.experience,
       toolsAndTechnologies: req.body.profileDetails.toolsAndTechnologies || [],
-      portfolioLinks: req.body.profileDetails.portfolioLinks || [],
       socialMedia: req.body.profileDetails.socialMedia || [],
     };
 
@@ -60,8 +62,6 @@ exports.getFreelancerProfile = async (req, res) => {
 
     profile.profileDetails.email = freelancer.registrationDetails.email;
     profile.profileDetails.fullName = freelancer.registrationDetails.fullName;
-    profile.profileDetails.userName = freelancer.registrationDetails.userName;
-
     res.status(200).json(profile);
   } catch (error) {
     console.error("Get profile error:", error);
@@ -91,7 +91,6 @@ exports.updateFreelancerProfile = async (req, res) => {
     // Block any attempt to overwrite primary fields
     delete updatedDetails.email;
     delete updatedDetails.fullName;
-    delete updatedDetails.userName;
 
     profile.profileDetails = {
       ...profile.profileDetails,
@@ -109,7 +108,7 @@ exports.updateFreelancerProfile = async (req, res) => {
 
 exports.getFreelancerById = async (req, res) => {
   try {
-    const freelancer = await Freelancer.findById(req.params.id);
+    const freelancer = await Freelancer.findById(req.params.freelancerId);
     if (!freelancer) {
       return res.status(404).json({ message: 'Freelancer not found' });
     }
@@ -122,18 +121,28 @@ exports.getFreelancerById = async (req, res) => {
 // DELETE
 exports.deleteFreelancerById = async (req, res) => {
   try {
-    const freelancerId = req.params.freelancerId;
-    const found = await Freelancer.findById(freelancerId);
-    if (!found) return res.status(404).json({ message: "Freelancer not found" });
+    const { freelancerId } = req.params;
+    console.log('[DEBUG] Deletion triggered for freelancerId:', freelancerId);
 
-    await FreelancerProfile.deleteMany({ freelancerId });
+    const freelancer = await Freelancer.findById(freelancerId);
+    if (!freelancer) {
+      console.warn('[WARN] Freelancer not found with ID:', freelancerId);
+      return res.status(404).json({ message: 'Freelancer not found' });
+    }
+
+    const profileDeleteResult = await FreelancerProfile.deleteMany({ freelancerId });
+    console.log('[DEBUG] Deleted freelancer profiles count:', profileDeleteResult.deletedCount);
+
     await Freelancer.findByIdAndDelete(freelancerId);
+    console.log('[DEBUG] Freelancer deleted');
 
-    res.status(200).json({ message: "Freelancer and profile deleted" });
+    return res.status(200).json({ message: 'Freelancer and associated profile(s) deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('[ERROR] Deleting freelancer:', error);
+    return res.status(500).json({ message: 'Server error. Please try again later.' });
   }
 };
+
 
 // BASIC INFO
 exports.getFreelancerBasicDetails = async (req, res) => {
@@ -147,7 +156,7 @@ exports.getFreelancerBasicDetails = async (req, res) => {
 
     const basicDetails = {
       fullName: freelancer.registrationDetails.fullName,
-      userName: freelancer.registrationDetails.userName,
+      userName: profile.profileDetails.userName,
       email: freelancer.registrationDetails.email,
       gender: profile.profileDetails.gender,
       dob: profile.profileDetails.dob,
@@ -173,9 +182,7 @@ exports.updateFreelancerBasicDetails = async (req, res) => {
     if (!freelancer || !profile)
       return res.status(404).json({ message: "Freelancer or profile not found" });
 
-    if (userName) freelancer.registrationDetails.userName = userName;
-    await freelancer.save();
-
+    if (userName) freelancer.profileDetails.userName = userName;
     if (gender) profile.profileDetails.gender = gender;
     if (dob) profile.profileDetails.dob = dob;
     if (phoneNumber) profile.profileDetails.phoneNumber = phoneNumber;
@@ -203,7 +210,6 @@ exports.getProfessionalDetails = async (req, res) => {
       primarySkillset: profile.profileDetails.primarySkillset,
       experience: profile.profileDetails.experience,
       toolsAndTechnologies: profile.profileDetails.toolsAndTechnologies,
-      portfolioLinks: profile.profileDetails.portfolioLinks,
       socialMedia: profile.profileDetails.socialMedia
     };
 
@@ -220,7 +226,6 @@ exports.updateProfessionalDetails = async (req, res) => {
       primarySkillset,
       experience,
       toolsAndTechnologies,
-      portfolioLinks,
       socialMedia
     } = req.body;
 
@@ -233,7 +238,6 @@ exports.updateProfessionalDetails = async (req, res) => {
     profile.profileDetails.primarySkillset = primarySkillset;
     profile.profileDetails.experience = experience;
     profile.profileDetails.toolsAndTechnologies = toolsAndTechnologies;
-    profile.profileDetails.portfolioLinks = portfolioLinks;
     profile.profileDetails.socialMedia = socialMedia;
 
     await profile.save();
@@ -244,11 +248,10 @@ exports.updateProfessionalDetails = async (req, res) => {
   }
 };
 
-// HEADER
-// freelancerProfileController.js
+
 exports.getFreelancerHeaderInfo = async (req, res) => {
   try {
-    const freelancerId = req.params.id; // 👈 Make sure it matches your route param
+    const freelancerId = req.params.freelancerId; // 👈 Make sure it matches your route param
     const freelancer = await Freelancer.findById(freelancerId);
     const profile = await FreelancerProfile.findOne({ freelancerId });
 
@@ -258,6 +261,7 @@ exports.getFreelancerHeaderInfo = async (req, res) => {
 
     const header = {
       fullName: freelancer.registrationDetails.fullName,
+      userName: profile.profileDetails.userName,
       profilePicture: {
         fileName: profile.profileDetails.profilePicture?.fileName || null,
         url: profile.profileDetails.profilePicture?.url || null

@@ -60,9 +60,6 @@ exports.createClientProfile = async (req, res) => {
 };
 
 
-
-// GET PROFILE BY CLIENT ID
-// GET BY CLIENT ID
 exports.getClientProfile = async (req, res) => {
   try {
     const clientId = req.params.clientId;
@@ -88,8 +85,6 @@ exports.getClientProfile = async (req, res) => {
 };
 
 
-// UPDATE
-// UPDATE
 exports.updateClientProfile = async (req, res) => {
   try {
     if (!req.clientId) {
@@ -127,7 +122,6 @@ exports.updateClientProfile = async (req, res) => {
 };
 
 
-
 exports.getClientById = async (req, res) => {
   try {
     const client = await Client.findById(req.params.clientId);
@@ -140,7 +134,7 @@ exports.getClientById = async (req, res) => {
   }
 };
 
-// DELETE
+
 exports.deleteClientById = async (req, res) => {
   try {
     const clientId = req.params.clientId;
@@ -156,8 +150,7 @@ exports.deleteClientById = async (req, res) => {
   }
 };
 
-// BASIC INFO
-// GET: Fetch Client Basic Details
+
 exports.getClientBasicDetails = async (req, res) => {
   try {
     const clientId = req.params.clientId;
@@ -189,7 +182,7 @@ exports.getClientBasicDetails = async (req, res) => {
   }
 };
 
-// PUT: Update Client Basic Details
+
 exports.updateClientBasicDetails = async (req, res) => {
   try {
     const clientId = req.params.clientId;
@@ -282,6 +275,7 @@ exports.getClientHeaderInfo = async (req, res) => {
 
     const header = {
         fullName: client.registrationDetails.fullName,
+          userName: profile.profileDetails.userName,
         profilePicture: {
           fileName: profile.profileDetails.profilePicture?.fileName || null,
           url: profile.profileDetails.profilePicture?.url || null
