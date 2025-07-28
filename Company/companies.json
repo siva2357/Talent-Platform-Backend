@@ -1,0 +1,272 @@
+[
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP001",
+      "companyLogo": { "fileName": "logo1.png", "url": "https://example.com/logo1.png" },
+      "companyName": "AI Quantum Solutions",
+      "companyAddress": "Bangalore, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP002",
+      "companyLogo": { "fileName": "logo2.png", "url": "https://example.com/logo2.png" },
+      "companyName": "DeepDev Technologies",
+      "companyAddress": "Hyderabad, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP003",
+      "companyLogo": { "fileName": "logo3.png", "url": "https://example.com/logo3.png" },
+      "companyName": "WebInfinity Labs",
+      "companyAddress": "Pune, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP004",
+      "companyLogo": { "fileName": "logo4.png", "url": "https://example.com/logo4.png" },
+      "companyName": "NextGen Softwares",
+      "companyAddress": "Delhi, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP005",
+      "companyLogo": { "fileName": "logo5.png", "url": "https://example.com/logo5.png" },
+      "companyName": "NeuroTech AI",
+      "companyAddress": "Chennai, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP006",
+      "companyLogo": { "fileName": "logo6.png", "url": "https://example.com/logo6.png" },
+      "companyName": "Innovate Web Systems",
+      "companyAddress": "Mumbai, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP007",
+      "companyLogo": { "fileName": "logo7.png", "url": "https://example.com/logo7.png" },
+      "companyName": "Cognitive AI Labs",
+      "companyAddress": "Kolkata, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP008",
+      "companyLogo": { "fileName": "logo8.png", "url": "https://example.com/logo8.png" },
+      "companyName": "SmartDev Hub",
+      "companyAddress": "Noida, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP009",
+      "companyLogo": { "fileName": "logo9.png", "url": "https://example.com/logo9.png" },
+      "companyName": "AI Stack Engineers",
+      "companyAddress": "Ahmedabad, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP010",
+      "companyLogo": { "fileName": "logo10.png", "url": "https://example.com/logo10.png" },
+      "companyName": "TechVerse AI",
+      "companyAddress": "Indore, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP011",
+      "companyLogo": { "fileName": "logo11.png", "url": "https://example.com/logo11.png" },
+      "companyName": "NeuralBase Systems",
+      "companyAddress": "Gurgaon, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP012",
+      "companyLogo": { "fileName": "logo12.png", "url": "https://example.com/logo12.png" },
+      "companyName": "Fusion Web Tech",
+      "companyAddress": "Jaipur, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP013",
+      "companyLogo": { "fileName": "logo13.png", "url": "https://example.com/logo13.png" },
+      "companyName": "CodeNova AI",
+      "companyAddress": "Nagpur, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP014",
+      "companyLogo": { "fileName": "logo14.png", "url": "https://example.com/logo14.png" },
+      "companyName": "BrightMind Coders",
+      "companyAddress": "Lucknow, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP015",
+      "companyLogo": { "fileName": "logo15.png", "url": "https://example.com/logo15.png" },
+      "companyName": "CloudCraft Systems",
+      "companyAddress": "Bhubaneswar, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP016",
+      "companyLogo": { "fileName": "logo16.png", "url": "https://example.com/logo16.png" },
+      "companyName": "CodeVerse Studios",
+      "companyAddress": "Surat, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP017",
+      "companyLogo": { "fileName": "logo17.png", "url": "https://example.com/logo17.png" },
+      "companyName": "WebAstra Networks",
+      "companyAddress": "Vijayawada, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP018",
+      "companyLogo": { "fileName": "logo18.png", "url": "https://example.com/logo18.png" },
+      "companyName": "AI Web Matrix",
+      "companyAddress": "Coimbatore, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP019",
+      "companyLogo": { "fileName": "logo19.png", "url": "https://example.com/logo19.png" },
+      "companyName": "TechForge India",
+      "companyAddress": "Patna, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP020",
+      "companyLogo": { "fileName": "logo20.png", "url": "https://example.com/logo20.png" },
+      "companyName": "OptiMind AI",
+      "companyAddress": "Raipur, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP021",
+      "companyLogo": { "fileName": "logo21.png", "url": "https://example.com/logo21.png" },
+      "companyName": "VisionSoft AI",
+      "companyAddress": "Amritsar, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP022",
+      "companyLogo": { "fileName": "logo22.png", "url": "https://example.com/logo22.png" },
+      "companyName": "HyperLogix Labs",
+      "companyAddress": "Bhopal, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP023",
+      "companyLogo": { "fileName": "logo23.png", "url": "https://example.com/logo23.png" },
+      "companyName": "DataDock AI",
+      "companyAddress": "Trivandrum, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP024",
+      "companyLogo": { "fileName": "logo24.png", "url": "https://example.com/logo24.png" },
+      "companyName": "BitBeam Softwares",
+      "companyAddress": "Varanasi, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP025",
+      "companyLogo": { "fileName": "logo25.png", "url": "https://example.com/logo25.png" },
+      "companyName": "SoftBrain Solutions",
+      "companyAddress": "Mysore, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP026",
+      "companyLogo": { "fileName": "logo26.png", "url": "https://example.com/logo26.png" },
+      "companyName": "IntelliDev Co.",
+      "companyAddress": "Dehradun, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP027",
+      "companyLogo": { "fileName": "logo27.png", "url": "https://example.com/logo27.png" },
+      "companyName": "SmartMesh Pvt Ltd",
+      "companyAddress": "Kanpur, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP028",
+      "companyLogo": { "fileName": "logo28.png", "url": "https://example.com/logo28.png" },
+      "companyName": "MindEdge WebTech",
+      "companyAddress": "Madurai, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP029",
+      "companyLogo": { "fileName": "logo29.png", "url": "https://example.com/logo29.png" },
+      "companyName": "OpenAI Edge Systems",
+      "companyAddress": "Ranchi, India"
+    }
+  },
+  {
+    "adminId": "688336e7ad371ffc809f70c2",
+    "companyDetails": {
+      "companyId": "COMP030",
+      "companyLogo": { "fileName": "logo30.png", "url": "https://example.com/logo30.png" },
+      "companyName": "ByteBloom India",
+      "companyAddress": "Guwahati, India"
+    }
+  }
+]
