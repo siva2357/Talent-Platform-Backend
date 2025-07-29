@@ -14,6 +14,11 @@ const findUserAndVerify = async (model, profileModel, idField, role, email, pass
 
   if (!user) return null;
 
+  if (!user.registrationDetails.password) {
+    console.error("Password is undefined for user:", email);
+    return null;
+  }
+
   const isValidPassword = await bcrypt.compare(password, user.registrationDetails.password);
   if (!isValidPassword) return null;
 
@@ -21,7 +26,10 @@ const findUserAndVerify = async (model, profileModel, idField, role, email, pass
     return { unverified: true };
   }
 
-  const profile = await profileModel.findOne({ [idField]: user._id });
+  const profile = profileModel
+    ? await profileModel.findOne({ [idField]: user._id })
+    : null;
+
   return { user, profile, role };
 };
 
