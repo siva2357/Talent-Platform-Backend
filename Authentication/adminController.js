@@ -5,9 +5,12 @@ const defaultAdmin = {
   registrationDetails: {
     fullName: "Admin User",
     userName: "admin",
-    email: "creative.official08@gmail.com",
+    email: "admin@gmail.com",
     password: "Siva@2357", // ensure this exists
-    profilePicture: "https://res.cloudinary.com/dpp8aspqs/image/upload/v1737024440/Logo_qboacm.svg",
+    profilePicture: {
+      fileName:"Profile picture",
+      url:"https://res.cloudinary.com/dpp8aspqs/image/upload/v1737024440/Logo_qboacm.svg"
+    },
     verified: true
   },
   role: "admin"
@@ -66,6 +69,35 @@ exports.getAdminById = async (req, res) => {
       return res.status(404).json({ message: 'Admin not found' });
     }
     return res.status(200).json(admin);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+
+
+
+// Get Admin Profile by ID (filtered response)
+exports.getAdminProfileById = async (req, res) => {
+  try {
+    const admin = await AdminModel.findById(req.params.id).select(
+      'registrationDetails.userName registrationDetails.fullName registrationDetails.profilePicture'
+    );
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+
+    const { userName, fullName, profilePicture } = admin.registrationDetails;
+
+    return res.status(200).json({
+      userName,
+      fullName,
+      profilePicture: {
+        fileName: profilePicture?.fileName || '',
+        url: profilePicture?.url || ''
+      }
+    });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }

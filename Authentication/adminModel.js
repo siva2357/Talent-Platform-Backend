@@ -13,7 +13,10 @@ const adminSchema = new mongoose.Schema({
       lowercase: true
     },
     password: { type: String, required: true, select: false },
-    profilePicture: { type: String, default: '' },
+    profilePicture: {
+        fileName: { type: String, required: true },
+        url: { type: String, required: true }
+    },
     verified: { type: Boolean, default: true }
   },
   role: { type: String, default: 'admin' },
