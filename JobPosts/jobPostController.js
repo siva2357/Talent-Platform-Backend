@@ -3,7 +3,8 @@ const ClientProfile = require("../Profile-Details/clientProfileModel");
 const Company = require("../Company/companyModel");
 const mongoose = require("mongoose");
 const Client = require('../Authentication/clientModel');
-const Freelancer = require('../Authentication/freelancerModel');
+const FreelancerProfile = require('../Profile-Details/freelancerProfileModel');
+const { sendNotification } = require("../Middleware/notificationHelper"); // adjust path as needed
 
 exports.createJobPost = async (req, res) => {
   try {
@@ -231,33 +232,20 @@ exports.getJobApplicantsByClient = async (req, res) => {
     const jobPosts = await JobPost.find({
       clientId: new mongoose.Types.ObjectId(clientId),
       status: "Open",
-    })
-      .select("jobTitle applicants")
-      .populate("applicants.freelancerId", "name email location designation");
+    }).select("jobId jobTitle jobCategory jobType applicants");
 
-    const jobPostDetails = jobPosts.map(job => {
-      const applicants = (job.applicants || []).map(app => {
-        const freelancer = app.freelancerId;
-        return {
-          freelancerId: freelancer._id,
-          name: freelancer.name,
-          email: freelancer.email,
-          location: freelancer.location,
-          designation: freelancer.designation,
-        };
-      });
-
-      return {
-        _id: job._id,
-        jobTitle: job.jobTitle,
-        totalApplicants: applicants.length,
-        applicants,
-      };
-    });
+    const jobPostSummary = jobPosts.map(job => ({
+      _id: job._id,
+      jobId: job.jobId,
+      jobTitle: job.jobTitle,
+      jobCategory: job.jobCategory,
+      jobType: job.jobType,
+      totalApplicants: (job.applicants || []).length
+    }));
 
     return res.status(200).json({
-      totalJobPosts: jobPostDetails.length,
-      jobPosts: jobPostDetails
+      totalJobPosts: jobPostSummary.length,
+      jobPosts: jobPostSummary
     });
 
   } catch (error) {
@@ -271,34 +259,55 @@ exports.getJobApplicantsByClient = async (req, res) => {
 
 exports.getJobApplicants = async (req, res) => {
   try {
-    const { clientId, jobId } = req.params;
+    const clientId = req.clientId;
+    const { jobId } = req.params;
 
+    if (!jobId || !clientId) {
+      return res.status(400).json({ message: "Missing clientId or jobId" });
+    }
+
+    // Step 1: Find job post with applicants
     const jobPost = await JobPost.findOne({
       _id: new mongoose.Types.ObjectId(jobId),
       clientId: new mongoose.Types.ObjectId(clientId),
-    })
-      .populate({
-        path: "applicants.freelancerId",
-        model: "Freelancer",
-        select: "registrationDetails profileDetails",
-      });
+    });
 
     if (!jobPost) {
-      return res.status(403).json({ message: "Unauthorized or not found" });
+      return res.status(403).json({ message: "Unauthorized or job not found" });
     }
 
-    const applicants = jobPost.applicants.map(app => ({
-      freelancerId: app.freelancerId?._id,
-      fullName: app.freelancerId?.profileDetails?.fullName,
-      email: app.freelancerId?.registrationDetails?.email,
-      phoneNumber: app.freelancerId?.profileDetails?.phoneNumber,
-      appliedAt: app.appliedAt,
-    }));
+    // Step 2: Extract freelancerIds from applicants
+    const freelancerIds = jobPost.applicants.map(app => app.freelancerId);
+
+    // Step 3: Fetch their profile data
+    const profiles = await FreelancerProfile.find({
+      freelancerId: { $in: freelancerIds }
+    });
+
+    // Create a map for faster lookup
+    const profileMap = {};
+    profiles.forEach(profile => {
+      profileMap[profile.freelancerId.toString()] = profile.profileDetails;
+    });
+
+    // Step 4: Map final response
+    const applicants = jobPost.applicants.map(app => {
+      const profile = profileMap[app.freelancerId?.toString()] || {};
+
+      return {
+        freelancerId: app.freelancerId || null,
+        fullName: profile.fullName || '',
+        gender: profile.gender || '',
+        email: profile.email || '',
+        phoneNumber: profile.phoneNumber || '',
+        appliedAt: app.appliedAt || null,
+      };
+    });
 
     return res.status(200).json({
       jobTitle: jobPost.jobTitle,
       totalApplicants: applicants.length,
-      applicants
+      applicants,
     });
 
   } catch (error) {
@@ -311,21 +320,27 @@ exports.getJobApplicants = async (req, res) => {
 
 
 
-exports.getPendingJobsByClient = async (req, res) => {
-  try {
-    const { clientId } = req.params;
 
-    const jobs = await JobPost.find({ clientId, status: "Pending" })
+
+
+
+exports.getPendingJobs = async (req, res) => {
+  try {
+    const jobs = await JobPost.find({ status: "Pending" })
       .populate("clientId")
       .populate("companyId");
 
     if (!jobs.length) return res.status(404).json({ message: "No pending jobs found" });
 
-    res.status(200).json(jobs);
+    res.status(200).json({
+      totalJobPosts: jobs.length,
+      jobPosts: jobs,
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err });
   }
 };
+
 
 exports.approveJobPost = async (req, res) => {
   try {
@@ -380,17 +395,21 @@ exports.rejectJobPost = async (req, res) => {
 // ✅ Get all job posts with status = 'open' (For freelancers)
 exports.getAllJobs = async (req, res) => {
   try {
-    const jobs = await JobPost.find({ status: "open" })
-      .populate("clientId", "registrationDetails") // Only basic info
+    const jobs = await JobPost.find({ status: "Open" })
+      .populate("clientId", "registrationDetails")
       .populate("companyId", "companyDetails");
 
     if (!jobs.length) return res.status(404).json({ message: "No open jobs found" });
 
-    res.status(200).json(jobs);
+    res.status(200).json({
+      totalJobPosts: jobs.length,
+      jobPosts: jobs,
+    });
   } catch (error) {
     res.status(500).json({ message: "Error fetching jobs", error: error.message });
   }
 };
+
 
 // ✅ Get full job post by ID (used by freelancers)
 exports.getJobById = async (req, res) => {
@@ -398,7 +417,6 @@ exports.getJobById = async (req, res) => {
     const { jobId } = req.params;
 
     const job = await JobPost.findById(jobId)
-      .populate("clientId", "registrationDetails")
       .populate("companyId", "companyDetails")
       .lean();
 
@@ -412,62 +430,86 @@ exports.getJobById = async (req, res) => {
     res.status(500).json({ message: "Error fetching job post", error: error.message });
   }
 };
-// Apply for a job for freelancers
-exports.applyForJob = async (req, res) => {
+
+exports.applyToJob = async (req, res) => {
   try {
-    const { freelancerId } = req.params;
-    const { jobId } = req.body;
+    const { jobId, freelancerId } = req.body;
 
-    const jobPost = await JobPost.findById(jobId);
-    if (!jobPost) return res.status(404).json({ message: "Job post not found" });
+    const job = await JobPost.findById(jobId);
+    if (!job) return res.status(404).json({ message: "Job not found" });
 
-    const alreadyApplied = jobPost.applicants.some(
-      app => app.freelancerId.toString() === freelancerId
-    );
-    if (alreadyApplied) {
-      return res.status(400).json({ message: "You have already applied for this job" });
-    }
+    const alreadyApplied = job.applicants.some(app => app.freelancerId.toString() === freelancerId);
+    if (alreadyApplied) return res.status(400).json({ message: "Already applied to this job" });
 
-    jobPost.applicants.push({ freelancerId, appliedAt: new Date() });
-    await jobPost.save();
+    const freelancer = await FreelancerProfile.findOne({ freelancerId }).select("profileDetails.fullName");
+    if (!freelancer) return res.status(404).json({ message: "Freelancer not found" });
 
-    res.status(200).json({ message: "Application submitted successfully" });
+    job.applicants.push({ freelancerId });
+    job.totalApplicants = job.applicants.length;
+    await job.save();
+
+    await sendNotification({
+      userId: job.clientId,
+      userType: "Client",
+      title: "New Job Application",
+      message: `${freelancer.profileDetails.fullName} has applied to your job: ${job.jobId} - ${job.jobTitle}`,
+      link: `/admin/jobs/applicants/${job._id}`
+    });
+
+    res.status(200).json({ message: "Applied successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Error applying for job", error });
+    console.error("Apply Error:", error);
+    res.status(500).json({ message: "Error applying to job", error });
   }
 };
 
+
+
+// Withdraw application
 
 exports.withdrawApplication = async (req, res) => {
   try {
     const { freelancerId, jobId } = req.params;
 
-    const jobPost = await JobPost.findById(jobId);
-    if (!jobPost) return res.status(404).json({ message: "Job post not found" });
+    const job = await JobPost.findById(jobId);
+    if (!job) return res.status(404).json({ message: "Job post not found" });
 
-    const applicantIndex = jobPost.applicants.findIndex(
-      app => app.freelancerId.toString() === freelancerId
-    );
-    if (applicantIndex === -1) {
-      return res.status(400).json({ message: "You have not applied for this job" });
-    }
+    const index = job.applicants.findIndex(app => app.freelancerId.toString() === freelancerId);
+    if (index === -1) return res.status(400).json({ message: "You have not applied for this job" });
 
-    const appliedAt = new Date(jobPost.applicants[applicantIndex].appliedAt);
+    const appliedAt = new Date(job.applicants[index].appliedAt);
     const now = new Date();
     const diffMinutes = (now - appliedAt) / 60000;
 
     if (diffMinutes > 60) {
-      return res.status(400).json({ message: "Withdrawal period has expired" });
+      return res.status(400).json({ message: "Withdrawal period (1 hour) has expired" });
     }
 
-    jobPost.applicants.splice(applicantIndex, 1);
-    await jobPost.save();
+    const freelancer = await FreelancerProfile.findOne({ freelancerId }).select("profileDetails.fullName");
+    if (!freelancer) return res.status(404).json({ message: "Freelancer not found" });
+
+    job.applicants.splice(index, 1);
+    job.totalApplicants = job.applicants.length;
+    await job.save();
+
+    await sendNotification({
+      userId: job.clientId,
+      userType: "Client",
+      title: "Application Withdrawn",
+      message: `${freelancer.profileDetails.fullName} has withdrawn from your job: ${job.jobId} - ${job.jobTitle}`,
+      link: `/admin/jobs/applicants/${job._id}`
+    });
 
     res.status(200).json({ message: "Application withdrawn successfully" });
   } catch (error) {
+    console.error("Withdraw Error:", error);
     res.status(500).json({ message: "Error withdrawing application", error });
   }
 };
+
+
+
+
 
 // Get all applied jobs for a specific freelancer
 exports.getAppliedJobs = async (req, res) => {
