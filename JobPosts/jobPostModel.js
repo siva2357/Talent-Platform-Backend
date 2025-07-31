@@ -4,9 +4,15 @@ const applicantSchema = new mongoose.Schema(
   {
     freelancerId: { type: mongoose.Schema.Types.ObjectId, ref: "Freelancer", required: true },
     appliedAt: { type: Date, default: Date.now },
+    status: {
+      type: String,
+      enum: ["Pending", "Shortlisted", "Rejected"],
+      default: "Pending"
+    }
   },
   { _id: false }
 );
+
 
 const jobPostSchema = new mongoose.Schema(
   {
@@ -31,7 +37,8 @@ const jobPostSchema = new mongoose.Schema(
       required: true,
       validate: {
         validator: function (value) {
-          return value > Date.now();
+      // Only validate if this is a NEW document
+      return this.isNew ? value > new Date() : true;
         },
         message: "Apply By Date must be in the future.",
       },

@@ -18,6 +18,17 @@ router.get("/jobPost/:id", identifier, jobPostController.getClientJobPostById);
 
 router.get("/jobPosts/applicants", identifier, jobPostController.getJobApplicantsByClient);
 router.get("/jobPost/:jobId/applicant-list", identifier, jobPostController.getJobApplicants);
+router.put('/jobPost/:jobId/applicants/:freelancerId/status', identifier, jobPostController.updateApplicantStatus);
+router.get('/job/:jobId/shortlisted', identifier, jobPostController.getShortlistedApplicants);
+router.get('/job/:jobId/rejected', identifier, jobPostController.getRejectedApplicants);
+
+
+
+
+
+
+
+
 
 // routes/freelancer.js
 router.get("/freelancer/jobs", identifier, jobPostController.getAllJobs);

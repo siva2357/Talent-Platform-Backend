@@ -1,21 +1,21 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const meetingEventSchema = new mongoose.Schema({
-  meetingId: { type: String, required: true, unique: true },
-  clientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true },
+  meetingId: { type: String, required: true },
+  clientId: { type: mongoose.Schema.Types.ObjectId, ref: "Client", required: true },
   clientName: { type: String, required: true },
-  clientDesignation: { type: String, required: true },
-  freelancerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Freelancer', required: true },
+  freelancerId: { type: mongoose.Schema.Types.ObjectId, ref: "Freelancer", required: true },
   freelancerName: { type: String, required: true },
   eventTitle: { type: String, required: true },
   startTime: { type: Date, required: true },
   endTime: { type: Date, required: true },
-  status: {
-    type: String,
-    enum: ['Scheduled', 'Completed', 'Not Completed', 'Pending'],
-    default: 'Scheduled'
+  meetingJoinUrl: { type: String, required: true },
+  status: { 
+    type: String, 
+    enum: ["Scheduled", "Completed", "Pending", "Not Completed"], 
+    default: "Scheduled"
   },
-  deleted: { type: Boolean, default: false }
+  deleted: { type: Boolean, default: false },
 }, { timestamps: true });
 
-module.exports = mongoose.model('MeetingEvent', meetingEventSchema);
+module.exports = mongoose.model("MeetingEvent", meetingEventSchema);

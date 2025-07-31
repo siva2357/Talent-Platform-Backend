@@ -225,6 +225,9 @@ exports.getClosedJobsByClient = async (req, res) => {
 };
 
 
+
+
+
 exports.getJobApplicantsByClient = async (req, res) => {
   try {
     const clientId = req.clientId;
@@ -253,9 +256,6 @@ exports.getJobApplicantsByClient = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch applicants", error: error.message });
   }
 };
-
-
-
 
 exports.getJobApplicants = async (req, res) => {
   try {
@@ -301,6 +301,7 @@ exports.getJobApplicants = async (req, res) => {
         email: profile.email || '',
         phoneNumber: profile.phoneNumber || '',
         appliedAt: app.appliedAt || null,
+        status:app.status||''
       };
     });
 
@@ -315,6 +316,105 @@ exports.getJobApplicants = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch applicants", error: error.message });
   }
 };
+
+
+
+exports.updateApplicantStatus = async (req, res) => {
+  try {
+    const { jobId, freelancerId } = req.params;
+    const { status } = req.body; // Expected: "Shortlisted" or "Rejected"
+
+    if (!["Shortlisted", "Rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const job = await JobPost.findOne({
+      _id: jobId,
+      clientId: req.clientId
+    });
+
+    if (!job) {
+      return res.status(404).json({ message: "Job not found or unauthorized" });
+    }
+
+    const applicant = job.applicants.find(app =>
+      app.freelancerId.toString() === freelancerId
+    );
+
+    if (!applicant) {
+      return res.status(404).json({ message: "Applicant not found" });
+    }
+
+    applicant.status = status;
+    await job.save();
+
+    return res.status(200).json({ message: `Applicant marked as ${status}` });
+  } catch (error) {
+    console.error("Update applicant status error:", error);
+    res.status(500).json({ message: "Failed to update status" });
+  }
+};
+
+
+
+exports.getShortlistedApplicants = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+
+    const job = await JobPost.findOne({
+      _id: jobId,
+      clientId: req.clientId
+    });
+
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    const shortlisted = job.applicants.filter(app => app.status === "Shortlisted");
+
+    // Optional: Join with freelancer profile
+    return res.status(200).json({
+      total: shortlisted.length,
+      applicants: shortlisted
+    });
+  } catch (err) {
+    console.error("Fetch shortlisted error:", err);
+    res.status(500).json({ message: "Error fetching shortlisted applicants" });
+  }
+};
+
+
+
+
+exports.getRejectedApplicants = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+
+    const job = await JobPost.findOne({
+      _id: jobId,
+      clientId: req.clientId
+    });
+
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    const rejected = job.applicants.filter(app => app.status === "Rejected");
+
+    return res.status(200).json({
+      total: rejected.length,
+      applicants: rejected
+    });
+  } catch (err) {
+    console.error("Fetch rejected error:", err);
+    res.status(500).json({ message: "Error fetching rejected applicants" });
+  }
+};
+
+
+
+
+
+
+
+
+
 
 
 
