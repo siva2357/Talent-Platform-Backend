@@ -19,12 +19,13 @@ router.get("/jobPost/:id", identifier, jobPostController.getClientJobPostById);
 router.get("/jobPosts/applicants", identifier, jobPostController.getJobApplicantsByClient);
 router.get("/jobPost/:jobId/applicant-list", identifier, jobPostController.getJobApplicants);
 router.put('/jobPost/:jobId/applicants/:freelancerId/status', identifier, jobPostController.updateApplicantStatus);
-router.get('/job/:jobId/shortlisted', identifier, jobPostController.getShortlistedApplicants);
-router.get('/job/:jobId/rejected', identifier, jobPostController.getRejectedApplicants);
+
+router.get('/client/jobs/shortlisted/summary', identifier, jobPostController.getShortlistedSummary);
+router.get('/client/job/:jobId/shortlisted-details', identifier, jobPostController.getShortlistedDetails);
 
 
-
-
+router.get('/client/jobs/rejected/summary', identifier, jobPostController.getRejectedSummary);
+router.get('/client/jobs/rejected/details', identifier, jobPostController.getRejectedDetails);
 
 
 

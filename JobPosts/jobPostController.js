@@ -357,56 +357,145 @@ exports.updateApplicantStatus = async (req, res) => {
 
 
 
-exports.getShortlistedApplicants = async (req, res) => {
+exports.getShortlistedSummary = async (req, res) => {
   try {
+    const clientId = req.clientId;
+
+    // Find all open jobs for this client
+    const jobs = await JobPost.find({ clientId, status: "Open" });
+
+    if (!jobs.length) return res.status(404).json({ message: "No open jobs found for client" });
+
+const jobPosts = jobs.map(job => {
+  const shortlisted = job.applicants.filter(app => app.status === "Shortlisted");
+
+  return {
+    jobPostId: job._id,
+    jobId: job.jobId,
+    jobTitle: job.jobTitle,
+    jobCategory: job.jobCategory,
+    shortlistedApplicants: shortlisted.length, // ✅ full data if needed
+  };
+});
+
+
+    return res.status(200).json({
+      totalJobs: jobPosts.length,
+      jobPosts
+    });
+  } catch (err) {
+    console.error("Fetch shortlisted details error:", err);
+    res.status(500).json({ message: "Error fetching shortlisted details" });
+  }
+};
+
+
+exports.getShortlistedDetails = async (req, res) => {
+  try {
+    const clientId = req.clientId;
     const { jobId } = req.params;
 
-    const job = await JobPost.findOne({
-      _id: jobId,
-      clientId: req.clientId
-    });
+    // Find the job by jobId and clientId, ensure status is Open
+    const job = await JobPost.findOne({ _id: jobId, clientId, status: "Open" });
+    if (!job) return res.status(404).json({ message: "Job not found or not open" });
 
-    if (!job) return res.status(404).json({ message: "Job not found" });
-
+    // Filter shortlisted applicants
     const shortlisted = job.applicants.filter(app => app.status === "Shortlisted");
 
-    // Optional: Join with freelancer profile
+    // Fetch freelancer profile details for each shortlisted applicant
+    const shortlistedWithDetails = await Promise.all(shortlisted.map(async (app) => {
+      const profile = await FreelancerProfile.findOne({ freelancerId: app.freelancerId }).select('profileDetails fullName email phoneNumber');
+      return {
+        freelancerId: app.freelancerId,
+        appliedAt: app.appliedAt,
+        status: app.status,
+        fullName: profile?.profileDetails.fullName || null,
+        email: profile?.profileDetails.email || null,
+        phoneNumber: profile?.profileDetails.phoneNumber || null,
+        profilePicture: profile?.profileDetails.profilePicture || null,
+        // add more fields as needed
+      };
+    }));
+
+    // Return job info plus shortlisted applicants with profiles
     return res.status(200).json({
-      total: shortlisted.length,
-      applicants: shortlisted
+      jobId: job._id,
+      jobTitle: job.jobTitle,
+      totalApplicants: job.applicants.length,
+      shortlistedApplicants: shortlistedWithDetails
     });
   } catch (err) {
-    console.error("Fetch shortlisted error:", err);
-    res.status(500).json({ message: "Error fetching shortlisted applicants" });
+    console.error("Fetch shortlisted details error:", err);
+    res.status(500).json({ message: "Error fetching shortlisted details" });
   }
 };
 
 
 
 
-exports.getRejectedApplicants = async (req, res) => {
+
+
+exports.getRejectedSummary = async (req, res) => {
   try {
-    const { jobId } = req.params;
+    const clientId = req.clientId;
 
-    const job = await JobPost.findOne({
-      _id: jobId,
-      clientId: req.clientId
+    // Find all open jobs for this client
+    const jobs = await JobPost.find({ clientId, status: "Open" });
+
+    if (!jobs.length) return res.status(404).json({ message: "No open jobs found for client" });
+
+    // Count total rejected applicants across all jobs
+    let totalRejected = 0;
+    jobs.forEach(job => {
+      const rejectedCount = job.applicants.filter(app => app.status === "Rejected").length;
+      totalRejected += rejectedCount;
     });
-
-    if (!job) return res.status(404).json({ message: "Job not found" });
-
-    const rejected = job.applicants.filter(app => app.status === "Rejected");
 
     return res.status(200).json({
-      total: rejected.length,
-      applicants: rejected
+      totalJobs: jobs.length,
+      totalRejectedApplicants: totalRejected
     });
   } catch (err) {
-    console.error("Fetch rejected error:", err);
-    res.status(500).json({ message: "Error fetching rejected applicants" });
+    console.error("Fetch rejected summary error:", err);
+    res.status(500).json({ message: "Error fetching rejected summary" });
   }
 };
 
+
+
+exports.getRejectedDetails = async (req, res) => {
+  try {
+    const clientId = req.clientId;
+
+    // Find all open jobs for this client
+    const jobs = await JobPost.find({ clientId, status: "Open" });
+
+    if (!jobs.length) return res.status(404).json({ message: "No open jobs found for client" });
+
+    const jobPosts = jobs.map(job => {
+      const rejected = job.applicants.filter(app => app.status === "Rejected");
+
+      return {
+        jobId: job._id,
+        jobTitle: job.jobTitle,
+        totalApplicants: job.applicants.length,
+        rejectedApplicants: rejected.map(app => ({
+          freelancerId: app.freelancerId,
+          appliedAt: app.appliedAt,
+          status: app.status
+        }))
+      };
+    });
+
+    return res.status(200).json({
+      totalJobs: jobPosts.length,
+      jobPosts
+    });
+  } catch (err) {
+    console.error("Fetch rejected details error:", err);
+    res.status(500).json({ message: "Error fetching rejected details" });
+  }
+};
 
 
 
