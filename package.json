@@ -6,8 +6,11 @@
     "cors": "^2.8.5",
     "csv-parser": "^3.2.0",
     "dotenv": "^17.2.0",
+    "ejs": "^3.1.10",
     "encryptor": "^0.1.0",
     "express": "^5.1.0",
+    "fs-extra": "^11.3.0",
+    "handlebars": "^4.7.8",
     "helmet": "^8.1.0",
     "init": "^0.1.2",
     "joi": "^17.13.3",
@@ -16,6 +19,7 @@
     "mongoose": "^8.16.4",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.5",
+    "puppeteer": "^24.15.0",
     "simple-encryptor": "^4.0.0"
   },
   "devDependencies": {

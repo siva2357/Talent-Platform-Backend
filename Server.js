@@ -46,6 +46,8 @@ const jobPostRoutes = require('./JobPosts/jobPostsRoutes');
 const companyRoutes = require("./Company/companyRoutes");
 
 const meetingRoutes = require("./Meetings/meetingRoutes");
+const offerLetterRoutes = require("./Offer-letter/offerLetterRoutes");
+
 
 app.use('/api', adminAuthRoutes);
 app.use('/api', clientAuthRoutes);
@@ -63,6 +65,7 @@ app.use('/api',jobPostRoutes);
 app.use('/api',companyRoutes);
 
 app.use('/api',meetingRoutes);
+app.use('/api',offerLetterRoutes);
 
 createDefaultAdmin();
 
