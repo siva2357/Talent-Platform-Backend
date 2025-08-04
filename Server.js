@@ -48,6 +48,7 @@ const companyRoutes = require("./Company/companyRoutes");
 const meetingRoutes = require("./Meetings/meetingRoutes");
 const offerLetterRoutes = require("./Offer-letter/offerLetterRoutes");
 
+const portfolioRoutes = require("./Portfolio/portfolioRoutes");
 
 app.use('/api', adminAuthRoutes);
 app.use('/api', clientAuthRoutes);
@@ -66,6 +67,9 @@ app.use('/api',companyRoutes);
 
 app.use('/api',meetingRoutes);
 app.use('/api',offerLetterRoutes);
+
+
+app.use('/api',portfolioRoutes);
 
 createDefaultAdmin();
 
