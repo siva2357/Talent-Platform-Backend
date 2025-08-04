@@ -1,0 +1,53 @@
+const express = require("express");
+const router = express.Router();
+const jobPostController = require("./jobPostController");
+const { identifier } = require('../Middleware/identification');
+
+
+
+// JOB POST routes
+router.post("/jobPost/create", identifier, jobPostController.createJobPost);
+router.put("/jobPost/:id/update", identifier, jobPostController.updateJobPost);
+router.put("/jobPost/:id/close", identifier, jobPostController.closeJobPost);
+router.put("/jobPost/:id/reopen", identifier, jobPostController.reopenJobPost);
+router.delete("/jobPost/:id/delete", identifier, jobPostController.deleteJobPost);
+router.get("/jobPosts/by-client", identifier, jobPostController.getJobsByClient);
+router.get("/jobPosts/closed", identifier, jobPostController.getClosedJobsByClient);
+router.get("/jobPost/:id", identifier, jobPostController.getClientJobPostById);
+
+
+router.get("/jobPosts/applicants", identifier, jobPostController.getJobApplicantsByClient);
+router.get("/jobPost/:jobId/applicant-list", identifier, jobPostController.getJobApplicants);
+router.put('/jobPost/:jobId/applicants/:freelancerId/status', identifier, jobPostController.updateApplicantStatus);
+
+router.get('/client/jobs/shortlisted/summary', identifier, jobPostController.getShortlistedSummary);
+router.get('/client/job/:jobId/shortlisted-details', identifier, jobPostController.getShortlistedDetails);
+
+
+router.get('/client/jobs/rejected/summary', identifier, jobPostController.getRejectedSummary);
+router.get('/client/jobs/rejected/details', identifier, jobPostController.getRejectedDetails);
+
+
+
+
+
+// routes/freelancer.js
+router.get("/freelancer/jobs", identifier, jobPostController.getAllJobs);
+router.get("/freelancer/job/:jobId", identifier, jobPostController.getJobById);
+
+
+router.post('/freelancer/job/apply', identifier, jobPostController.applyToJob);
+router.delete('/freelancer/:freelancerId/job/:jobId/withdraw', identifier, jobPostController.withdrawApplication);
+// Route: Get all jobs a specific freelancer has applied to
+router.get("/job/applied/:freelancerId", identifier, jobPostController.getAppliedJobs);
+router.get("/job/is-applied/:freelancerId/:jobId", identifier, jobPostController.getAppliedJobById);
+
+
+
+
+router.get("/jobs/pending", identifier, jobPostController.getPendingJobs);
+router.patch("/admin/approve/:jobId", identifier, jobPostController.approveJobPost);
+router.patch("/admin/reject/:jobId", identifier, jobPostController.rejectJobPost);
+
+
+module.exports = router;

@@ -1,64 +1,104 @@
 const bcrypt = require('bcryptjs');
-const AdminModel = require('../Authentication/adminModel');
+const AdminModel = require('./adminModel');
 
-// Default admin details
 const defaultAdmin = {
   registrationDetails: {
     fullName: "Admin User",
     userName: "admin",
-    email: "creative.official08@gmail.com",
-    password: "Siva@2357",
-    profilePicture: "https://res.cloudinary.com/dpp8aspqs/image/upload/v1737024440/Logo_qboacm.svg",
+    email: "admin@gmail.com",
+    password: "Siva@2357", // ensure this exists
+    profilePicture: {
+      fileName:"Profile picture",
+      url:"https://res.cloudinary.com/dpp8aspqs/image/upload/v1737024440/Logo_qboacm.svg"
+    },
     verified: true
   },
   role: "admin"
 };
 
-// Create default admin on server start
+// Create Default Admin
 exports.createDefaultAdmin = async () => {
   try {
-    const existingAdmin = await AdminModel.findOne({ 'registrationDetails.email': defaultAdmin.registrationDetails.email });
+    const adminExists = await AdminModel.findOne({
+      'registrationDetails.email': defaultAdmin.registrationDetails.email
+    });
 
-    if (!existingAdmin) {
-      const salt = await bcrypt.genSalt(12);
-      const hashedPassword = await bcrypt.hash(defaultAdmin.registrationDetails.password, salt);
-
-      const newAdmin = new AdminModel({
-        registrationDetails: {
-          ...defaultAdmin.registrationDetails,
-          password: hashedPassword
-        },
-        role: defaultAdmin.role
-      });
-
-      await newAdmin.save();
-      console.log("✅ Default admin created successfully.");
-    } else {
-      console.log("⚠️ Default admin already exists.");
+    if (adminExists) {
+      console.log('⚠️ Default admin already exists.');
+      return;
     }
-  } catch (error) {
-    console.error("❌ Error creating default admin:", error);
+
+    const plainPassword = defaultAdmin.registrationDetails.password;
+    if (!plainPassword) {
+      console.error(`❌ Password is undefined for user: ${defaultAdmin.registrationDetails.email}`);
+      return;
+    }
+
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(plainPassword, salt);
+
+    const newAdmin = new AdminModel({
+      ...defaultAdmin,
+      registrationDetails: {
+        ...defaultAdmin.registrationDetails,
+        password: hashedPassword
+      }
+    });
+
+    await newAdmin.save();
+    console.log('✅ Default admin created successfully.');
+  } catch (err) {
+    console.error('❌ Error creating default admin:', err);
   }
 };
 
-
-// Sign out admin
+// Logout Admin
 exports.signout = (req, res) => {
-  res.clearCookie('Authorization').status(200).json({
+  res.clearCookie('Authorization');
+  return res.status(200).json({
     success: true,
     message: 'Logged out successfully'
   });
 };
 
-// Get admin by ID
+// Get Admin by ID
 exports.getAdminById = async (req, res) => {
   try {
     const admin = await AdminModel.findById(req.params.id).select('-registrationDetails.password');
     if (!admin) {
       return res.status(404).json({ message: 'Admin not found' });
     }
-    res.status(200).json(admin);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.status(200).json(admin);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+
+
+
+// Get Admin Profile by ID (filtered response)
+exports.getAdminProfileById = async (req, res) => {
+  try {
+    const admin = await AdminModel.findById(req.params.id).select(
+      'registrationDetails.userName registrationDetails.fullName registrationDetails.profilePicture'
+    );
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+
+    const { userName, fullName, profilePicture } = admin.registrationDetails;
+
+    return res.status(200).json({
+      userName,
+      fullName,
+      profilePicture: {
+        fileName: profilePicture?.fileName || '',
+        url: profilePicture?.url || ''
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
   }
 };
