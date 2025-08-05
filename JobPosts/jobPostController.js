@@ -256,7 +256,6 @@ exports.getJobApplicantsByClient = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch applicants", error: error.message });
   }
 };
-
 exports.getJobApplicants = async (req, res) => {
   try {
     const clientId = req.clientId;
@@ -317,8 +316,6 @@ exports.getJobApplicants = async (req, res) => {
   }
 };
 
-
-
 exports.updateApplicantStatus = async (req, res) => {
   try {
     const { jobId, freelancerId } = req.params;
@@ -354,9 +351,6 @@ exports.updateApplicantStatus = async (req, res) => {
     res.status(500).json({ message: "Failed to update status" });
   }
 };
-
-
-
 exports.getShortlistedSummary = async (req, res) => {
   try {
     const clientId = req.clientId;
@@ -388,7 +382,6 @@ const jobPosts = jobs.map(job => {
     res.status(500).json({ message: "Error fetching shortlisted details" });
   }
 };
-
 
 exports.getShortlistedDetails = async (req, res) => {
   try {
@@ -430,11 +423,6 @@ exports.getShortlistedDetails = async (req, res) => {
   }
 };
 
-
-
-
-
-
 exports.getRejectedSummary = async (req, res) => {
   try {
     const clientId = req.clientId;
@@ -460,8 +448,6 @@ exports.getRejectedSummary = async (req, res) => {
     res.status(500).json({ message: "Error fetching rejected summary" });
   }
 };
-
-
 
 exports.getRejectedDetails = async (req, res) => {
   try {
@@ -503,16 +489,6 @@ exports.getRejectedDetails = async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
 exports.getPendingJobs = async (req, res) => {
   try {
     const jobs = await JobPost.find({ status: "Pending" })
@@ -529,7 +505,6 @@ exports.getPendingJobs = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err });
   }
 };
-
 
 exports.approveJobPost = async (req, res) => {
   try {
@@ -574,8 +549,6 @@ exports.rejectJobPost = async (req, res) => {
     res.status(500).json({ message: "Error rejecting job", error: err });
   }
 };
-
-
 
 
 
