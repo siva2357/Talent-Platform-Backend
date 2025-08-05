@@ -44,7 +44,6 @@ const notificationRoutes = require('./Notifications/notificationRoutes');
 
 const jobPostRoutes = require('./JobPosts/jobPostsRoutes');
 const companyRoutes = require("./Company/companyRoutes");
-const contractRoutes = require('./Contracts/contractRoutes');
 const meetingRoutes = require("./Meetings/meetingRoutes");
 const offerLetterRoutes = require("./Offer-letter/offerLetterRoutes");
 
@@ -65,7 +64,6 @@ app.use('/api',notificationRoutes);
 
 app.use('/api',jobPostRoutes);
 app.use('/api',companyRoutes);
-app.use('/api',contractRoutes);
 
 
 app.use('/api',meetingRoutes);
