@@ -9,4 +9,5 @@ router.get('/meetings/:id', identifier, meetingCtrl.getMeetingById);
 router.put('/meetings/:id', identifier, meetingCtrl.updateMeetingById);
 router.delete('/meetings/:id', identifier, meetingCtrl.deleteMeetingById);
 
+
 module.exports = router;
