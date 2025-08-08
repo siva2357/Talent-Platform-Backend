@@ -59,7 +59,6 @@ exports.createClientProfile = async (req, res) => {
   }
 };
 
-
 exports.getClientProfile = async (req, res) => {
   try {
     const clientId = req.params.clientId;
@@ -182,7 +181,6 @@ exports.getClientBasicDetails = async (req, res) => {
   }
 };
 
-
 exports.updateClientBasicDetails = async (req, res) => {
   try {
     const clientId = req.params.clientId;
@@ -263,8 +261,6 @@ exports.updateClientBasicDetails = async (req, res) => {
   }
 };
 
-
-// HEADER
 exports.getClientHeaderInfo = async (req, res) => {
   try {
     const clientId = req.params.clientId;
@@ -288,7 +284,6 @@ exports.getClientHeaderInfo = async (req, res) => {
   }
 };
 
-// SOCIAL MEDIA
 exports.getClientSocialMedia = async (req, res) => {
   try {
     const clientId = req.params.clientId;

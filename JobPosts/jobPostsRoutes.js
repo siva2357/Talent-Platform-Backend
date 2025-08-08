@@ -45,9 +45,6 @@ router.get("/job/is-applied/:freelancerId/:jobId", identifier, jobPostController
 
 
 
-router.get("/jobs/pending", identifier, jobPostController.getPendingJobs);
-router.patch("/admin/approve/:jobId", identifier, jobPostController.approveJobPost);
-router.patch("/admin/reject/:jobId", identifier, jobPostController.rejectJobPost);
 
 
 module.exports = router;

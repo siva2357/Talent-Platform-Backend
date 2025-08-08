@@ -4,7 +4,6 @@ const clientProfileSchema = mongoose.Schema(
   {
     clientId: { type: mongoose.Schema.Types.ObjectId, ref: "Client", required: true },
     profileDetails: {
-      // Section 1: Personal Details
       profilePicture: {
         fileName: { type: String, required: true },
         url: { type: String, required: true }
@@ -17,11 +16,9 @@ const clientProfileSchema = mongoose.Schema(
       phoneNumber: { type: String, required: true },
       address: { type: String, required: true },
       bioDescription: { type: String, required: true },
-
-      // Section 2: Professional & Social Info
       companyName: { type: String, required: true },
       designation: { type: String, required: true },
-      experience: { type: Number, required: true }, // in years
+      experience: { type: Number, required: true },
       socialMedia: [
         {
           platform: { type: String, required: true },

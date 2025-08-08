@@ -16,7 +16,6 @@ const defaultAdmin = {
   role: "admin"
 };
 
-// Create Default Admin
 exports.createDefaultAdmin = async () => {
   try {
     const adminExists = await AdminModel.findOne({
@@ -52,7 +51,6 @@ exports.createDefaultAdmin = async () => {
   }
 };
 
-// Logout Admin
 exports.signout = (req, res) => {
   res.clearCookie('Authorization');
   return res.status(200).json({
@@ -61,7 +59,6 @@ exports.signout = (req, res) => {
   });
 };
 
-// Get Admin by ID
 exports.getAdminById = async (req, res) => {
   try {
     const admin = await AdminModel.findById(req.params.id).select('-registrationDetails.password');
@@ -74,10 +71,6 @@ exports.getAdminById = async (req, res) => {
   }
 };
 
-
-
-
-// Get Admin Profile by ID (filtered response)
 exports.getAdminProfileById = async (req, res) => {
   try {
     const admin = await AdminModel.findById(req.params.id).select(
@@ -102,3 +95,8 @@ exports.getAdminProfileById = async (req, res) => {
     return res.status(500).json({ message: err.message });
   }
 };
+
+
+
+
+

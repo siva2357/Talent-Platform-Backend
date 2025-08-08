@@ -489,68 +489,6 @@ exports.getRejectedDetails = async (req, res) => {
 
 
 
-exports.getPendingJobs = async (req, res) => {
-  try {
-    const jobs = await JobPost.find({ status: "Pending" })
-      .populate("clientId")
-      .populate("companyId");
-
-    if (!jobs.length) return res.status(404).json({ message: "No pending jobs found" });
-
-    res.status(200).json({
-      totalJobPosts: jobs.length,
-      jobPosts: jobs,
-    });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err });
-  }
-};
-
-exports.approveJobPost = async (req, res) => {
-  try {
-    const { jobId } = req.params;
-
-    const updatedJob = await JobPost.findOneAndUpdate(
-      { _id: jobId, status: "Pending" },
-      {
-        status: "Open",
-        adminReviewedOn: new Date(),
-        verifiedByAdmin: true
-      },
-      { new: true }
-    );
-
-    if (!updatedJob) return res.status(404).json({ message: "Job not found or already reviewed" });
-
-    res.status(200).json({ message: "Job approved and opened", job: updatedJob });
-  } catch (err) {
-    res.status(500).json({ message: "Error approving job", error: err });
-  }
-};
-
-exports.rejectJobPost = async (req, res) => {
-  try {
-    const { jobId } = req.params;
-
-    const updatedJob = await JobPost.findOneAndUpdate(
-      { _id: jobId, status: "Pending" },
-      {
-        status: "Rejected",
-        adminReviewedOn: new Date(),
-        verifiedByAdmin: false
-      },
-      { new: true }
-    );
-
-    if (!updatedJob) return res.status(404).json({ message: "Job not found or already reviewed" });
-
-    res.status(200).json({ message: "Job rejected", job: updatedJob });
-  } catch (err) {
-    res.status(500).json({ message: "Error rejecting job", error: err });
-  }
-};
-
-
 
 
 
