@@ -7,7 +7,7 @@ const ClientProfile = require('../Profile-Details/clientProfileModel');
 const FreelancerProfile = require('../Profile-Details/freelancerProfileModel');
 require('dotenv').config();
 
-// Generic login helper
+
 const findUserAndVerify = async (model, profileModel, idField, role, email, password) => {
   const user = await model.findOne({ 'registrationDetails.email': email })
     .select('+registrationDetails.password +registrationDetails.verified');
@@ -33,7 +33,6 @@ const findUserAndVerify = async (model, profileModel, idField, role, email, pass
   return { user, profile, role };
 };
 
-// LOGIN
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -107,31 +106,25 @@ exports.login = async (req, res) => {
   }
 };
 
-// LOGOUT
 exports.logout = async (req, res) => {
   try {
     const { userId, role } = req.user;
-
     const models = {
       admin: Admin,
       freelancer: Freelancer,
       client: Client,
     };
-
     const model = models[role];
     if (!model) {
       return res.status(400).json({ success: false, message: "Invalid role" });
     }
-
     const user = await model.findById(userId);
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
-
     user.lastLogoutAt = new Date();
     user.status = "inactive";
     await user.save();
-
     res.clearCookie("Authorization");
     res.json({ success: true, message: "Logged out successfully" });
   } catch (err) {

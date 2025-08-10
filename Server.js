@@ -29,6 +29,7 @@ mongoose.connect(mongoUri)
 
 
 
+const errorHandler = require('./Middleware/errorHandling');
 
 const authRoutes = require('./Authentication/loginRoutes');
 const adminAuthRoutes = require('./Authentication/adminRoutes');
@@ -72,7 +73,7 @@ app.use('/api',offerLetterRoutes);
 app.use('/api',portfolioRoutes);
 
 
-
+app.use(errorHandler); 
 createDefaultAdmin();
 
 app.get('/', (req, res) => {

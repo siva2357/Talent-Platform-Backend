@@ -179,7 +179,6 @@ exports.getJobsByClient = async (req, res) => {
   }
 };
 
-
 exports.getClientJobPostById = async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -200,7 +199,6 @@ exports.getClientJobPostById = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch job details: ' + error.message });
   }
 };
-
 
 exports.getClosedJobsByClient = async (req, res) => {
   try {
@@ -223,9 +221,6 @@ exports.getClosedJobsByClient = async (req, res) => {
     });
   }
 };
-
-
-
 
 
 exports.getJobApplicantsByClient = async (req, res) => {
@@ -351,6 +346,7 @@ exports.updateApplicantStatus = async (req, res) => {
     res.status(500).json({ message: "Failed to update status" });
   }
 };
+
 exports.getShortlistedSummary = async (req, res) => {
   try {
     const clientId = req.clientId;
@@ -492,7 +488,6 @@ exports.getRejectedDetails = async (req, res) => {
 
 
 
-// ✅ Get all job posts with status = 'open' (For freelancers)
 exports.getAllJobs = async (req, res) => {
   try {
     const jobs = await JobPost.find({ status: "Open" })
@@ -510,8 +505,50 @@ exports.getAllJobs = async (req, res) => {
   }
 };
 
+exports.closeJobPost = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const clientId = req.clientId;
 
-// ✅ Get full job post by ID (used by freelancers)
+    const job = await JobPost.findOneAndUpdate(
+      {
+        _id: jobId,
+        clientId,
+        status: "Open", // Only allow closing if status is "Open"
+      },
+      { $set: { status: "Closed" } },
+      { new: true }
+    );
+
+    if (!job) {
+      return res.status(400).json({ message: "Job post not found, unauthorized, or not in Open status" });
+    }
+
+    res.status(200).json({ message: "Job post closed successfully", job });
+  } catch (error) {
+    res.status(500).json({ message: "Error closing job post", error: error.message });
+  }
+};
+
+exports.reopenJobPost = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const clientId = req.clientId;
+
+    const job = await JobPost.findOneAndUpdate(
+      { _id: jobId, clientId },
+      { $set: { status: "Open" } },
+      { new: true }
+    );
+
+    if (!job) return res.status(404).json({ message: "Job post not found or unauthorized" });
+
+    res.status(200).json({ message: "Job post reopened successfully", job });
+  } catch (error) {
+    res.status(500).json({ message: "Error reopening job post", error: error.message });
+  }
+};
+
 exports.getJobById = async (req, res) => {
   try {
     const { jobId } = req.params;
@@ -530,6 +567,7 @@ exports.getJobById = async (req, res) => {
     res.status(500).json({ message: "Error fetching job post", error: error.message });
   }
 };
+
 
 exports.applyToJob = async (req, res) => {
   try {
@@ -562,10 +600,6 @@ exports.applyToJob = async (req, res) => {
     res.status(500).json({ message: "Error applying to job", error });
   }
 };
-
-
-
-// Withdraw application
 
 exports.withdrawApplication = async (req, res) => {
   try {
@@ -607,11 +641,6 @@ exports.withdrawApplication = async (req, res) => {
   }
 };
 
-
-
-
-
-// Get all applied jobs for a specific freelancer
 exports.getAppliedJobs = async (req, res) => {
   try {
     const { freelancerId } = req.params;
@@ -631,8 +660,6 @@ exports.getAppliedJobs = async (req, res) => {
   }
 };
 
-
-//Get individual job appled list by spefic freleancers
 exports.getAppliedJobById = async (req, res) => {
   try {
     const { freelancerId, jobId } = req.params;

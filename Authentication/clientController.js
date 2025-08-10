@@ -3,25 +3,22 @@ const { signupSchema } = require("../Middleware/validator");
 const Client = require('./clientModel');
 const bcrypt = require('bcryptjs');
 
-exports.signup = async (req, res) => {
+exports.signup = async (req, res, next) => {
   const { registrationDetails, role } = req.body;
   const { fullName, email, password } = registrationDetails;
 
   try {
     const { error } = signupSchema.validate(req.body);
     if (error) {
-      return res.status(400).json({
-        success: false,
-        message: error.details[0].message
-      });
+      error.statusCode = 400;
+      return next(error); // Pass to errorHandler
     }
 
     const existingClient = await Client.findOne({ 'registrationDetails.email': email });
     if (existingClient) {
-      return res.status(400).json({
-        success: false,
-        message: "Client already exists!"
-      });
+      const err = new Error("Client already exists!");
+      err.statusCode = 400;
+      return next(err);
     }
 
     const salt = await bcrypt.genSalt(12);
@@ -36,6 +33,7 @@ exports.signup = async (req, res) => {
     });
 
     const result = await newClient.save();
+
     res.status(201).json({
       success: true,
       message: "Your account has been registered successfully",
@@ -46,17 +44,7 @@ exports.signup = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Signup Error:", error);
-    if (error.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: "Email already exists!"
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: "An error occurred during registration. Please try again."
-    });
+    next(error); // Forward error to middleware
   }
 };
+

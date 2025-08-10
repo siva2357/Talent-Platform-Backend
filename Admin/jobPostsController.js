@@ -1,4 +1,6 @@
 const JobPost = require("../JobPosts/jobPostModel");
+const { sendNotification } = require("../Middleware/notificationHelper"); // adjust path as needed
+const Admin = require ('../Authentication/adminModel');
 
 exports.getAllClientJobPosts = async (req, res) => {
   try {
@@ -125,13 +127,31 @@ exports.approveJobPost = async (req, res) => {
       { new: true }
     );
 
-    if (!updatedJob) return res.status(404).json({ message: "Job not found or already reviewed" });
+    if (!updatedJob) {
+      return res.status(404).json({ message: "Job not found or already reviewed" });
+    }
 
-    res.status(200).json({ message: "Job approved and opened", job: updatedJob });
+    // Optional: Admin name from JWT or session
+    const adminName = req.user?.registrationDetails?.fullName || "Admin";
+
+    // Send notification to client
+    await sendNotification({
+      userId: updatedJob.clientId,
+      userType: "Client",
+      title: "Job Approved",
+      message: `${adminName} has approved your job "${updatedJob.jobTitle}" (${updatedJob.jobId}).`,
+    });
+
+    return res.status(200).json({
+      message: "Job approved and status set to Open",
+      job: updatedJob
+    });
   } catch (err) {
-    res.status(500).json({ message: "Error approving job", error: err });
+    console.error("Error in approveJobPost:", err);
+    return res.status(500).json({ message: "Error approving job", error: err });
   }
 };
+
 
 exports.rejectJobPost = async (req, res) => {
   try {
@@ -147,13 +167,31 @@ exports.rejectJobPost = async (req, res) => {
       { new: true }
     );
 
-    if (!updatedJob) return res.status(404).json({ message: "Job not found or already reviewed" });
+    if (!updatedJob) {
+      return res.status(404).json({ message: "Job not found or already reviewed" });
+    }
 
-    res.status(200).json({ message: "Job rejected", job: updatedJob });
+    // Optional: Admin name from session
+    const adminName = req.user?.registrationDetails?.fullName || "Admin";
+
+    // Send notification to client
+    await sendNotification({
+      userId: updatedJob.clientId,
+      userType: "Client",
+      title: "Job Rejected",
+      message: `${adminName} has rejected your job "${updatedJob.jobTitle}" (${updatedJob.jobId}).`,
+    });
+
+    return res.status(200).json({
+      message: "Job rejected",
+      job: updatedJob
+    });
   } catch (err) {
-    res.status(500).json({ message: "Error rejecting job", error: err });
+    console.error("Error in rejectJobPost:", err);
+    return res.status(500).json({ message: "Error rejecting job", error: err });
   }
 };
+
 
 
 exports.getAllJobApplicantsAcrossJobs = async (req, res) => {

@@ -16,7 +16,6 @@ exports.identifier = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
-
     const { userId, role } = decoded || {};
 
     if (!userId || !role) {
@@ -27,10 +26,14 @@ exports.identifier = (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Unauthorized: Invalid role' });
     }
 
+    // Role-specific ID attachment
     req.user = decoded;
-
-    // Optional: Attach role-specific ID if needed
     req[`${role}Id`] = userId;
+
+    // Enforce role for admin routes
+    if (req.path.startsWith('/admin') && role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Unauthorized: Admin access only' });
+    }
 
     next();
 
