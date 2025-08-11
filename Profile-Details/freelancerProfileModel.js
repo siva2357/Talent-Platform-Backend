@@ -11,11 +11,10 @@ const freelancerProfileSchema = mongoose.Schema(
       fullName: { type: String, required: true },
       userName: { type: String, required: true },
       gender: { type: String, required: true },
-      dob: { type: Date }, // optional
+      dob: { type: Date }, 
       email: { type: String, required: true },
       phoneNumber: { type: String, required: true },
       bioDescription: { type: String, required: true },
-
       primarySkillset: [{ type: String }],
       experience: { type: Number, required: true },
       toolsAndTechnologies: [{ type: String }], 

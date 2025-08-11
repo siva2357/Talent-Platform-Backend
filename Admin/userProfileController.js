@@ -1,8 +1,6 @@
 const Client = require('../Authentication/clientModel');
 const ClientProfile = require('../Profile-Details/clientProfileModel');
-
 const JobPost = require('../JobPosts/jobPostModel'); // Your JobPost schema
-
 const Freelancer = require('../Authentication/freelancerModel');
 const FreelancerProfile = require('../Profile-Details/freelancerProfileModel');
 const Portfolio = require('../Portfolio/portfolioModel');

@@ -251,6 +251,8 @@ exports.getJobApplicantsByClient = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch applicants", error: error.message });
   }
 };
+
+
 exports.getJobApplicants = async (req, res) => {
   try {
     const clientId = req.clientId;

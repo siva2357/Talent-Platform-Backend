@@ -1,6 +1,6 @@
 const Freelancer = require('../Authentication/freelancerModel');
 const FreelancerProfile = require('../Profile-Details/freelancerProfileModel');
-
+const Portfolio = require("../Portfolio/portfolioModel");
 // CREATE
 exports.createFreelancerProfile = async (req, res) => {
   try {
@@ -277,7 +277,6 @@ exports.getFreelancerHeaderInfo = async (req, res) => {
 
 
 
-// PROFILE PICTURE
 exports.getFreelancerProfilePicture = async (req, res) => {
   try {
     const freelancerId = req.params.freelancerId;
@@ -311,3 +310,68 @@ exports.updateProfilePicture = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
+
+
+
+exports.getAllTalents = async (req, res) => {
+  try {
+    console.log("Fetching all freelancers...");
+    const freelancers = await FreelancerProfile.find({})
+      .select("freelancerId  profileDetails.profilePicture.url  profileDetails.fullName profileDetails.email profileDetails.phoneNumber profileDetails.primarySkillset profileDetails.gender")
+      .lean();
+
+    console.log("Total freelancers found:", freelancers.length);
+
+    return res.status(200).json({
+      success: true,
+      total: freelancers.length,
+      data: freelancers
+    });
+  } catch (error) {
+    console.error("Error fetching all freelancers:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching freelancers"
+    });
+  }
+};
+
+exports.getTalentById = async (req, res) => {
+  try {
+    const { talentId } = req.params;
+    console.log(`Fetching talent with ID: ${talentId}`);
+
+    // 1. Get freelancer profile
+    const profile = await FreelancerProfile.findOne({ freelancerId: talentId }).lean();
+    if (!profile) {
+      console.warn(`Talent profile not found for ID: ${talentId}`);
+      return res.status(404).json({
+        success: false,
+        message: "Talent profile not found"
+      });
+    }
+
+    // 2. Get freelancer portfolio
+    const portfolio = await Portfolio.find({ freelancerId: talentId }).lean();
+
+    console.log(`Profile found: ${profile.profileDetails.fullName}`);
+    console.log(`Portfolio projects found: ${portfolio.length}`);
+
+    return res.status(200).json({
+      success: true,
+      profile,
+      portfolio
+    });
+  } catch (error) {
+    console.error("Error fetching talent by ID:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching talent details"
+    });
+  }
+};
+
+
+

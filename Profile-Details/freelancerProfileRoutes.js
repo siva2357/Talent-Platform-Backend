@@ -8,6 +8,12 @@ router.post('/freelancer/profile-details', identifier, freelancerProfileControll
 router.put('/freelancer/:freelancerId/profile-details', identifier, freelancerProfileController.updateFreelancerProfile);
 router.get('/freelancer/:freelancerId/profile-details', identifier, freelancerProfileController.getFreelancerProfile);
 
+
+
+router.get('/client/talents', identifier, freelancerProfileController.getAllTalents);
+router.get('/client/talents/:talentId/profile-details', identifier, freelancerProfileController.getTalentById);
+
+
 // Settings + Header Info
 router.get('/freelancer/:freelancerId/profile-settings', identifier, freelancerProfileController.getFreelancerById);
 router.get('/freelancer/:freelancerId/profile', identifier, freelancerProfileController.getFreelancerHeaderInfo);
