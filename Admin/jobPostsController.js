@@ -7,7 +7,7 @@ exports.getAllClientJobPosts = async (req, res) => {
     const jobPosts = await JobPost.find()
       .populate({
         path: 'clientId',
-        select: 'registrationDetails.fullName registrationDetails.email',
+        select: 'registrationDetails.fullName',
       })
       .populate({
         path: 'companyId',
@@ -28,15 +28,7 @@ exports.getAllClientJobPosts = async (req, res) => {
       status: post.status,
       verifiedByAdmin: post.verifiedByAdmin || false,
 
-      postedBy: post.clientId
-        ? {
-            fullName: post.clientId.registrationDetails.fullName,
-            email: post.clientId.registrationDetails.email,
-          }
-        : {
-            fullName: 'Unknown',
-            email: 'Unknown'
-          },
+      postedBy: post.clientId? post.clientId.registrationDetails.fullName : 'Unknown',
 
       company: post.companyId
         ? {

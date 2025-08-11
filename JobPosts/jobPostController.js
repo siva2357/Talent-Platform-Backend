@@ -290,6 +290,7 @@ exports.getJobApplicants = async (req, res) => {
 
       return {
         freelancerId: app.freelancerId || null,
+        profileImage: profile.profilePicture.url,
         fullName: profile.fullName || '',
         gender: profile.gender || '',
         email: profile.email || '',
@@ -567,6 +568,8 @@ exports.getJobById = async (req, res) => {
     res.status(500).json({ message: "Error fetching job post", error: error.message });
   }
 };
+
+
 
 
 exports.applyToJob = async (req, res) => {
