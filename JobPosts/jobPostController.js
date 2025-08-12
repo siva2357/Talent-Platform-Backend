@@ -93,7 +93,6 @@ exports.updateJobPost = async (req, res) => {
   }
 };
 
-
 exports.closeJobPost = async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -119,7 +118,6 @@ exports.closeJobPost = async (req, res) => {
   }
 };
 
-
 exports.reopenJobPost = async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -138,7 +136,6 @@ exports.reopenJobPost = async (req, res) => {
     res.status(500).json({ message: "Error reopening job post", error: error.message });
   }
 };
-
 
 exports.deleteJobPost = async (req, res) => {
   try {
@@ -261,8 +258,6 @@ exports.getJobApplicants = async (req, res) => {
     if (!jobId || !clientId) {
       return res.status(400).json({ message: "Missing clientId or jobId" });
     }
-
-    // Step 1: Find job post with applicants
     const jobPost = await JobPost.findOne({
       _id: new mongoose.Types.ObjectId(jobId),
       clientId: new mongoose.Types.ObjectId(clientId),
@@ -271,11 +266,7 @@ exports.getJobApplicants = async (req, res) => {
     if (!jobPost) {
       return res.status(403).json({ message: "Unauthorized or job not found" });
     }
-
-    // Step 2: Extract freelancerIds from applicants
     const freelancerIds = jobPost.applicants.map(app => app.freelancerId);
-
-    // Step 3: Fetch their profile data
     const profiles = await FreelancerProfile.find({
       freelancerId: { $in: freelancerIds }
     });
@@ -287,20 +278,22 @@ exports.getJobApplicants = async (req, res) => {
     });
 
     // Step 4: Map final response
-    const applicants = jobPost.applicants.map(app => {
-      const profile = profileMap[app.freelancerId?.toString()] || {};
+  const applicants = jobPost.applicants.map(app => {
+  const profile = profileMap[app.freelancerId?.toString()] || {};
 
-      return {
-        freelancerId: app.freelancerId || null,
-        profileImage: profile.profilePicture.url,
-        fullName: profile.fullName || '',
-        gender: profile.gender || '',
-        email: profile.email || '',
-        phoneNumber: profile.phoneNumber || '',
-        appliedAt: app.appliedAt || null,
-        status:app.status||''
-      };
-    });
+  return {
+    freelancerId: app.freelancerId || null,
+    profileImage: profile.profilePicture?.url || null,
+    fullName: profile.fullName || '',
+    gender: profile.gender || '',
+    email: profile.email || '',
+    phoneNumber: profile.phoneNumber || '',
+    appliedAt: app.appliedAt || null,
+    status: app.status || '',
+    offerLetter: app.offerLetter ?? false
+  };
+});
+
 
     return res.status(200).json({
       jobTitle: jobPost.jobTitle,
@@ -349,6 +342,8 @@ exports.updateApplicantStatus = async (req, res) => {
     res.status(500).json({ message: "Failed to update status" });
   }
 };
+
+
 
 exports.getShortlistedSummary = async (req, res) => {
   try {
@@ -422,6 +417,7 @@ exports.getShortlistedDetails = async (req, res) => {
   }
 };
 
+
 exports.getRejectedSummary = async (req, res) => {
   try {
     const clientId = req.clientId;
@@ -481,9 +477,6 @@ exports.getRejectedDetails = async (req, res) => {
     res.status(500).json({ message: "Error fetching rejected details" });
   }
 };
-
-
-
 
 
 
@@ -648,7 +641,12 @@ exports.withdrawApplication = async (req, res) => {
 
 exports.getAppliedJobs = async (req, res) => {
   try {
-    const { freelancerId } = req.params;
+    // Use freelancerId from auth middleware (e.g., req.freelancerId), not URL params
+    const freelancerId = req.freelancerId;
+
+    if (!freelancerId) {
+      return res.status(401).json({ message: "Unauthorized: Freelancer ID missing" });
+    }
 
     const appliedJobs = await JobPost.find({ "applicants.freelancerId": freelancerId })
       .populate("clientId")
@@ -664,6 +662,7 @@ exports.getAppliedJobs = async (req, res) => {
     res.status(500).json({ message: "Error fetching applied jobs", error });
   }
 };
+
 
 exports.getAppliedJobById = async (req, res) => {
   try {

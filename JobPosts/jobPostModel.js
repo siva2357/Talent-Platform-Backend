@@ -8,10 +8,15 @@ const applicantSchema = new mongoose.Schema(
       type: String,
       enum: ["Pending", "Shortlisted", "Rejected"],
       default: "Pending"
+    },
+    offerLetter: {
+      type: Boolean,
+      default: false
     }
   },
   { _id: false }
 );
+
 
 
 const jobPostSchema = new mongoose.Schema(

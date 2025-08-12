@@ -39,7 +39,9 @@ router.get("/freelancer/job/:jobId", identifier, jobPostController.getJobById);
 router.post('/freelancer/job/apply', identifier, jobPostController.applyToJob);
 router.delete('/freelancer/:freelancerId/job/:jobId/withdraw', identifier, jobPostController.withdrawApplication);
 // Route: Get all jobs a specific freelancer has applied to
-router.get("/job/applied/:freelancerId", identifier, jobPostController.getAppliedJobs);
+router.get("/jobs/applied", identifier, jobPostController.getAppliedJobs);
+
+
 router.get("/job/is-applied/:freelancerId/:jobId", identifier, jobPostController.getAppliedJobById);
 
 

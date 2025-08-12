@@ -8,49 +8,17 @@ const generateOfferLetterPDF = require('../Utils/generateOfferLetter'); // adjus
 const transporter = require('../Middleware/sendMail'); // your mail setup file
 require('dotenv').config(); // to load your email env values
 const path = require('path'); // for PDF path
-const moment = require('moment');
 
-
-// exports.sendOffer = async (req, res) => {
-//   try {
-//     const { jobPostId, freelancerId, offerMessage, offeredSalary, joiningDate } = req.body;
-//     const clientId = req.clientId; // from auth middleware
-
-//     // ✅ Check if an offer already exists for this freelancer and job
-//     const existingOffer = await OfferLetter.findOne({ jobPostId, freelancerId });
-//     if (existingOffer) {
-//       return res.status(400).json({ message: "Offer already sent to this freelancer for this job." });
-//     }
-
-//     // ✅ Create and save new offer
-//     const offer = new OfferLetter({
-//       jobPostId,
-//       freelancerId,
-//       clientId,
-//       offerMessage,
-//       offeredSalary,
-//       joiningDate
-//     });
-
-//     await offer.save();
-//     res.status(201).json({ message: "Offer letter sent successfully", offer });
-//   } catch (error) {
-//     res.status(500).json({ message: "Failed to send offer", error: error.message });
-//   }
-// };
 
 exports.sendOffer = async (req, res) => {
   try {
     const { jobPostId, freelancerId, offerMessage, offeredSalary, joiningDate } = req.body;
     const clientId = req.clientId;
-
-    // 1. Check if offer already exists
     const existingOffer = await OfferLetter.findOne({ jobPostId, freelancerId });
     if (existingOffer) {
       return res.status(400).json({ message: "Offer already sent to this freelancer for this job." });
     }
 
-    // 2. Fetch job and freelancer data for PDF/email
     const job = await JobPost.findById(jobPostId);
     const freelancer = await Freelancer.findById(freelancerId); // Adjust if using custom User model
     const freelancerProfile = await FreelancerProfile.findOne({ freelancerId });
@@ -93,8 +61,6 @@ const pdfData = {
 const outputPath = path.join(__dirname, `../Offers/Offer-${freelancerId}-${Date.now()}.pdf`);
 await generateOfferLetterPDF(pdfData, outputPath);
 
-
-    // 4. Send email
     await transporter.sendMail({
       from: process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
       to: freelancerEmail,
@@ -120,7 +86,6 @@ await generateOfferLetterPDF(pdfData, outputPath);
       ]
     });
 
-    // 5. Only now — Save to DB
     const newOffer = new OfferLetter({
       jobPostId,
       freelancerId,
@@ -131,8 +96,11 @@ await generateOfferLetterPDF(pdfData, outputPath);
     });
 
     await newOffer.save();
+    await JobPost.updateOne(
+  { _id: jobPostId, "applicants.freelancerId": freelancerId },
+  { $set: { "applicants.$.offerLetter": true } }
+);
 
-    // 6. Populate and return response
     const populatedOffer = await OfferLetter.findById(newOffer._id)
       .populate("freelancerId", "email phoneNumber")
       .populate("jobPostId");
@@ -144,8 +112,6 @@ await generateOfferLetterPDF(pdfData, outputPath);
     res.status(500).json({ message: "Failed to send offer or save", error: error.message });
   }
 };
-
-
 
 
 exports.getFreelancerOffers = async (req, res) => {
@@ -211,9 +177,6 @@ exports.getFreelancerOffers = async (req, res) => {
   }
 };
 
-
-
-
 exports.respondToOffer = async (req, res) => {
   try {
     const freelancerId = req.freelancerId; // from auth
@@ -242,9 +205,6 @@ exports.respondToOffer = async (req, res) => {
     res.status(500).json({ message: "Failed to respond to offer", error: error.message });
   }
 };
-
-
-
 
 exports.getClientOffers = async (req, res) => {
   try {
