@@ -17,6 +17,15 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Add no-cache headers globally here
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
+
+
 const {createDefaultAdmin} = require('./Authentication/adminController'); // ✅ Import
 
 const mongoUri = process.env.MONGO_URI_LOCAL;

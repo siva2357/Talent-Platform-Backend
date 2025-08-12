@@ -9,7 +9,7 @@ const SavedTalentSchema = new mongoose.Schema(
     },
     freelancerId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'FreelancerProfile',
+      ref: 'Freelancer',
       required: true
     },
     saved: { type: Boolean, default: true } // always true here logically, but kept for possible future use
