@@ -46,7 +46,9 @@ router.get("/job/is-applied/:freelancerId/:jobId", identifier, jobPostController
 
 
 
-
+router.post('/freelancer/save-jobpost', identifier,jobPostController.saveJobpost);
+router.delete('/freelancer/unsave-jobpost', identifier,jobPostController.unsaveJobpost);
+router.get('/freelancer/saved-jobposts', identifier,jobPostController.getSavedJobposts);
 
 
 module.exports = router;

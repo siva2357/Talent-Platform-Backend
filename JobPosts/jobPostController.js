@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const Client = require('../Authentication/clientModel');
 const FreelancerProfile = require('../Profile-Details/freelancerProfileModel');
 const { sendNotification } = require("../Middleware/notificationHelper"); // adjust path as needed
+const SavedJobpost = require('./savedJobPostModel'); // adjust path as needed
 
 exports.createJobPost = async (req, res) => {
   try {
@@ -682,3 +683,203 @@ exports.getAppliedJobById = async (req, res) => {
     res.status(500).json({ message: "Error checking applied job", error });
   }
 };
+
+
+
+
+
+
+
+
+
+// Example: get saved jobs for a freelancer
+exports.saveTalent = async (req, res) => {
+  try {
+    const { clientId, freelancerId } = req.body;
+
+    // Validate IDs
+    if (!mongoose.Types.ObjectId.isValid(clientId) || !mongoose.Types.ObjectId.isValid(freelancerId)) {
+      return res.status(400).json({ success: false, message: 'Invalid clientId or freelancerId' });
+    }
+
+    // Check if already saved
+    const exists = await SavedTalent.findOne({ clientId, freelancerId });
+    if (exists) {
+      return res.status(400).json({ success: false, message: 'Talent already saved' });
+    }
+
+    // Create saved talent entry
+    const saved = await SavedTalent.create({ clientId, freelancerId });
+    return res.status(201).json({ success: true, data: saved });
+  } catch (error) {
+    console.error('Error saving talent:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.unsaveTalent = async (req, res) => {
+  try {
+    const { clientId, freelancerId } = req.body;
+
+    // Validate IDs
+    if (!mongoose.Types.ObjectId.isValid(clientId) || !mongoose.Types.ObjectId.isValid(freelancerId)) {
+      return res.status(400).json({ success: false, message: 'Invalid clientId or freelancerId' });
+    }
+
+    // Remove saved talent entry
+    const deleted = await SavedTalent.findOneAndDelete({ clientId, freelancerId });
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Talent not found in saved list' });
+    }
+
+    return res.status(200).json({ success: true, message: 'Talent removed from saved list' });
+  } catch (error) {
+    console.error('Error unsaving talent:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.getSavedTalents = async (req, res) => {
+  try {
+    const { clientId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(clientId)) {
+      return res.status(400).json({ success: false, message: 'Invalid clientId' });
+    }
+
+    const savedTalents = await SavedTalent.find({ clientId, freelancerId: { $ne: null } })
+      .populate('freelancerId')
+      .lean();
+
+    const freelancerIds = savedTalents.map(item => item.freelancerId._id);
+
+    const profiles = await FreelancerProfile.find({ freelancerId: { $in: freelancerIds } })
+      .select('profileDetails freelancerId')
+      .lean();
+
+    const profileMap = {};
+    profiles.forEach(p => {
+      profileMap[p.freelancerId.toString()] = p;
+    });
+
+    const results = savedTalents.map(item => ({
+      ...item,
+      profileDetails: profileMap[item.freelancerId._id.toString()]?.profileDetails || null
+    }));
+
+    const filteredResults = results.map(item => ({
+      freelancerId: item.freelancerId._id.toString(),
+      saved: item.saved,  // <-- include saved value here
+      profileDetails: {
+        profilePicture: {
+          url: item.profileDetails?.profilePicture?.url || null,
+        },
+        fullName: item.profileDetails?.fullName || '',
+        gender: item.profileDetails?.gender || '',
+        email: item.profileDetails?.email || '',
+        phoneNumber: item.profileDetails?.phoneNumber || '',
+        primarySkillset: item.profileDetails?.primarySkillset || [],
+      }
+    }));
+
+    return res.status(200).json({
+      success: true,
+      total: filteredResults.length,
+      data: filteredResults,
+    });
+
+  } catch (error) {
+    console.error('Error fetching saved talents:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+
+
+exports.saveJobpost = async (req, res) => {
+  try {
+    const freelancerId = req.freelancerId; // from auth middleware
+    const { jobPostId } = req.body;
+
+    console.log('saveJobpost called:', { freelancerId, jobPostId });
+
+    if (!mongoose.Types.ObjectId.isValid(freelancerId) || !mongoose.Types.ObjectId.isValid(jobPostId)) {
+      return res.status(400).json({ success: false, message: 'Invalid freelancerId or jobPostId' });
+    }
+
+    const exists = await SavedJobpost.findOne({ freelancerId, jobPostId });
+    if (exists) {
+      return res.status(400).json({ success: false, message: 'Job already saved' });
+    }
+
+    const savedJob = await SavedJobpost.create({ freelancerId, jobPostId });
+    return res.status(201).json({ success: true, data: savedJob });
+  } catch (error) {
+    console.error('Error saving jobpost:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+
+exports.unsaveJobpost = async (req, res) => {
+  try {
+    const freelancerId = req.freelancerId; // from auth middleware
+    const { jobPostId } = req.body;
+
+    console.log('unsaveJobpost called:', { freelancerId, jobPostId });
+
+    if (!mongoose.Types.ObjectId.isValid(freelancerId) || !mongoose.Types.ObjectId.isValid(jobPostId)) {
+      return res.status(400).json({ success: false, message: 'Invalid freelancerId or jobPostId' });
+    }
+
+    const deleted = await SavedJobpost.findOneAndDelete({ freelancerId, jobPostId });
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Saved job not found' });
+    }
+
+    return res.status(200).json({ success: true, message: 'Job removed from saved list' });
+  } catch (error) {
+    console.error('Error unsaving jobpost:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+
+exports.getSavedJobposts = async (req, res) => {
+  try {
+    const freelancerId = req.freelancerId; // from middleware
+
+    if (!mongoose.Types.ObjectId.isValid(freelancerId)) {
+      return res.status(400).json({ success: false, message: 'Invalid freelancerId' });
+    }
+
+const savedJobs = await SavedJobpost.find({ freelancerId, saved: true })
+  .populate({
+    path: 'jobPostId',
+    populate: {
+      path: 'companyId',        // populate companyId inside jobPostId
+      select: 'companyDetails', // select the companyDetails field (adjust fields as needed)
+    }
+  })
+  .lean();
+
+
+    const response = savedJobs.map(item => ({
+      savedJobId: item._id,
+      jobPost: item.jobPostId,
+      saved: item.saved,
+      savedAt: item.createdAt,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      total: response.length,
+      data: response,
+    });
+  } catch (error) {
+    console.error('Error fetching saved jobs:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+
