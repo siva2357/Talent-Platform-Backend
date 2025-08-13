@@ -159,12 +159,10 @@ exports.getMeetingByIdForFreelancer = async (req, res) => {
 };
 
 
-
-
 exports.updateMeetingById = async (req, res) => {
   try {
     const { userId, role } = req.user || {};
-    const { jobId, startTime, endTime, meetingJoinUrl } = req.body;
+    const { jobId, startTime, endTime, meetingJoinUrl, meetingId } = req.body;
     if (role !== 'client') {
       return res.status(403).json({ message: "Only clients can update meetings" });
     }
@@ -305,6 +303,10 @@ exports.updateMeetingStatus = async (req, res) => {
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+
+
+
 
 
 

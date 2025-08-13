@@ -7,13 +7,10 @@ const templatePath = path.resolve(__dirname, '../templates/offerLetter.ejs');
 
 async function generateOfferLetterPDF(data, outputPath) {
   try {
-    // Ensure output directory exists
     const outputDir = path.dirname(outputPath);
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
-
-    // Read and render EJS template
     const templateHtml = fs.readFileSync(templatePath, 'utf8');
     const finalHtml = ejs.render(templateHtml, data);
 

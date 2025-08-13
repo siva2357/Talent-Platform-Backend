@@ -8,7 +8,7 @@ const generateOfferLetterPDF = require('../Utils/generateOfferLetter'); // adjus
 const transporter = require('../Middleware/sendMail'); // your mail setup file
 require('dotenv').config(); // to load your email env values
 const path = require('path'); // for PDF path
-
+const moment = require('moment');
 
 exports.sendOffer = async (req, res) => {
   try {
@@ -52,13 +52,15 @@ const pdfData = {
   joiningDateFormatted: moment(joiningDate).format("MMMM D, YYYY"),
   sentOnFormatted: moment().format("MMMM D, YYYY"),
   clientName,
-  clientDesignation
+  clientDesignation,
+
 };
 
 
 
+const filename = `Offer-${freelancerId}-${Date.now()}.pdf`;
 
-const outputPath = path.join(__dirname, `../Offers/Offer-${freelancerId}-${Date.now()}.pdf`);
+const outputPath = path.join(__dirname, '../Offers', filename); // use same filename
 await generateOfferLetterPDF(pdfData, outputPath);
 
     await transporter.sendMail({
@@ -86,16 +88,18 @@ await generateOfferLetterPDF(pdfData, outputPath);
       ]
     });
 
-    const newOffer = new OfferLetter({
-      jobPostId,
-      freelancerId,
-      clientId,
-      offerMessage,
-      offeredSalary,
-      joiningDate
-    });
+const newOffer = new OfferLetter({
+  jobPostId,
+  freelancerId,
+  clientId,
+  offerMessage,
+  offeredSalary,
+  joiningDate,
+  pdfPath: `/offers/${filename}` // <-- relative path matches actual file
+});
+await newOffer.save();
 
-    await newOffer.save();
+
     await JobPost.updateOne(
   { _id: jobPostId, "applicants.freelancerId": freelancerId },
   { $set: { "applicants.$.offerLetter": true } }
@@ -127,31 +131,23 @@ exports.getFreelancerOffers = async (req, res) => {
       .populate("clientId", "_id");
 
     if (!offers.length) {
-      return res.status(404).json({ message: "No offers found." });
+      return res.status(200).json([]); // Return empty array instead of 404
     }
 
-    // Collect clientIds
-    const clientIds = [...new Set(offers.map(o => o.clientId?._id.toString()))];
-
-    // Fetch client profiles
+    // Map clientId -> client profile
+    const clientIds = [...new Set(offers.map(o => o.clientId?._id?.toString()))];
     const profiles = await ClientProfile.find({ clientId: { $in: clientIds } });
-
-    // Map clientId -> profile
     const profileMap = {};
-    profiles.forEach(profile => {
-      profileMap[profile.clientId.toString()] = profile;
-    });
+    profiles.forEach(profile => profileMap[profile.clientId.toString()] = profile);
 
-    // Fetch companies
+    // Map companyName -> company details
     const companyNames = [...new Set(profiles.map(p => p.profileDetails.companyName))];
     const companies = await Company.find({ "companyDetails.companyName": { $in: companyNames } });
-
     const companyMap = {};
-    companies.forEach(company => {
-      companyMap[company.companyDetails.companyName] = company.companyDetails;
-    });
+    companies.forEach(company => companyMap[company.companyDetails.companyName] = company.companyDetails);
 
-    // Final flattened response
+    const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 4000}`;
+
     const formattedOffers = offers.map(offer => {
       const profile = profileMap[offer.clientId?._id?.toString()];
       const company = profile ? companyMap[profile.profileDetails.companyName] : null;
@@ -159,7 +155,7 @@ exports.getFreelancerOffers = async (req, res) => {
       return {
         offerId: offer._id,
         status: offer.status,
-        createdAt: offer.createdAt,
+        createdAt: offer.createdAt ? moment(offer.createdAt).format("MMMM D, YYYY") : null,
         jobId: offer.jobPostId?.jobId || null,
         jobTitle: offer.jobPostId?.jobTitle || null,
         jobType: offer.jobPostId?.jobType || null,
@@ -167,15 +163,18 @@ exports.getFreelancerOffers = async (req, res) => {
         companyId: company?.companyId || null,
         companyName: company?.companyName || null,
         companyAddress: company?.companyAddress || null,
-        companyLogo: company?.companyLogo || null
+        companyLogo: company?.companyLogo || null,
+        pdfUrl: offer.pdfPath ? `${baseUrl}${offer.pdfPath}` : null
       };
     });
 
     res.status(200).json(formattedOffers);
   } catch (error) {
+    console.error('❌ Failed to get freelancer offers:', error);
     res.status(500).json({ message: "Failed to get offers", error: error.message });
   }
 };
+
 
 exports.respondToOffer = async (req, res) => {
   try {

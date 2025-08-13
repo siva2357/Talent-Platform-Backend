@@ -5,7 +5,7 @@ const cors = require('cors');
 const cookieParser = require("cookie-parser");
 const mongoose = require('mongoose');
 const app = express();
-
+const path = require('path');
 app.use(cors({
     origin: ['http://localhost:4200'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
@@ -84,6 +84,8 @@ app.use('/api',portfolioRoutes);
 
 app.use('/api',talentRoutes);
 
+app.use('/offers', express.static(path.join(__dirname, 'Offers')));
+
 app.use(errorHandler); 
 createDefaultAdmin();
 
@@ -95,4 +97,5 @@ const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Server started on port ${PORT}`);
+    console.log(`🌐 Base URL is set to: ${process.env.BASE_URL}`);
 });

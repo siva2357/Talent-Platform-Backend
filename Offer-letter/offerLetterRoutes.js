@@ -15,4 +15,7 @@ router.post("/offers/respond", identifier, offerCtrl.respondToOffer);
 // Client views offers they've sent
 router.get("/offers/client", identifier, offerCtrl.getClientOffers);
 
+
+router.post("/offers",identifier, offerCtrl.getFreelancerOffers);
+
 module.exports = router;

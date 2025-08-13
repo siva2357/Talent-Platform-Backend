@@ -8,6 +8,7 @@ const offerLetterSchema = new mongoose.Schema(
     offerMessage: { type: String, required: true },
     offeredSalary: { type: String, required: true },
     joiningDate: { type: Date, required: true },
+    pdfPath: { type: String, required: true },
     status: { type: String, enum: ["Pending", "Accepted", "Rejected"], default: "Pending"},
     sentOn: { type: Date, default: Date.now },
     respondedOn: { type: Date }
