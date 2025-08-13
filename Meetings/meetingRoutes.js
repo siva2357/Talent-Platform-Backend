@@ -5,6 +5,7 @@ const { identifier } = require('../Middleware/identification');
 
 router.post('/client/meetings', identifier, meetingController.createMeeting);
 router.get('/client/meetings', identifier, meetingController.getAllMeetingsByClient);
+router.patch('/client/meetings/status', identifier, meetingController.updateMeetingStatus);
 router.get('/client/meetings/:id', identifier, meetingController.getMeetingByIdForClient);
 router.patch('/client/meetings/:id', identifier, meetingController.updateMeetingById);
 router.delete('/client/meetings/:id', identifier, meetingController.deleteMeetingById);

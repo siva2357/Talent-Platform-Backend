@@ -6,6 +6,9 @@ const Client = require('../Authentication/clientModel');
 const FreelancerProfile = require('../Profile-Details/freelancerProfileModel');
 const { sendNotification } = require("../Middleware/notificationHelper"); // adjust path as needed
 const SavedJobpost = require('./savedJobPostModel'); // adjust path as needed
+const MeetingEvent = require('../Meetings/meetingModel'); // adjust path as needed
+const OfferLetter= require('../Offer-letter/offerLetterModel'); // adjust path as needed
+
 
 exports.createJobPost = async (req, res) => {
   try {
@@ -259,6 +262,8 @@ exports.getJobApplicants = async (req, res) => {
     if (!jobId || !clientId) {
       return res.status(400).json({ message: "Missing clientId or jobId" });
     }
+
+    // Fetch the job post
     const jobPost = await JobPost.findOne({
       _id: new mongoose.Types.ObjectId(jobId),
       clientId: new mongoose.Types.ObjectId(clientId),
@@ -267,34 +272,58 @@ exports.getJobApplicants = async (req, res) => {
     if (!jobPost) {
       return res.status(403).json({ message: "Unauthorized or job not found" });
     }
+
     const freelancerIds = jobPost.applicants.map(app => app.freelancerId);
+
+    // Fetch freelancer profiles
     const profiles = await FreelancerProfile.find({
       freelancerId: { $in: freelancerIds }
     });
 
-    // Create a map for faster lookup
     const profileMap = {};
     profiles.forEach(profile => {
       profileMap[profile.freelancerId.toString()] = profile.profileDetails;
     });
 
-    // Step 4: Map final response
-  const applicants = jobPost.applicants.map(app => {
-  const profile = profileMap[app.freelancerId?.toString()] || {};
+    // Fetch meetings for this job and freelancers
+    const meetings = await MeetingEvent.find({
+      jobId,
+      freelancerId: { $in: freelancerIds }
+    });
+    const meetingMap = {};
+    meetings.forEach(m => {
+      meetingMap[m.freelancerId.toString()] = true; // any meeting exists
+    });
 
-  return {
-    freelancerId: app.freelancerId || null,
-    profileImage: profile.profilePicture?.url || null,
-    fullName: profile.fullName || '',
-    gender: profile.gender || '',
-    email: profile.email || '',
-    phoneNumber: profile.phoneNumber || '',
-    appliedAt: app.appliedAt || null,
-    status: app.status || '',
-    offerLetter: app.offerLetter ?? false
-  };
+    // Fetch offer letters for this job and freelancers
+// Fetch offer letters for this job and freelancers
+const offers = await OfferLetter.find({
+  jobPostId: jobId,   // <- make sure this matches your schema
+  freelancerId: { $in: freelancerIds }
+});
+const offerMap = {};
+offers.forEach(o => {
+  offerMap[o.freelancerId.toString()] = true; // offer exists
 });
 
+    // Map final response
+    const applicants = jobPost.applicants.map(app => {
+      const profile = profileMap[app.freelancerId?.toString()] || {};
+
+      return {
+        freelancerId: app.freelancerId || null,
+        profileImage: profile.profilePicture?.url || null,
+        fullName: profile.fullName || '',
+        gender: profile.gender || '',
+        email: profile.email || '',
+        phoneNumber: profile.phoneNumber || '',
+        appliedAt: app.appliedAt || null,
+        status: app.status || '',
+        offerLetter: offerMap[app.freelancerId?.toString()] ?? false, // real-time
+        interviewScheduled: meetingMap[app.freelancerId?.toString()] ?? false, // real-time
+        interviewCompleted:  meetingMap[app.freelancerId?.toString()] ?? false
+      };
+    });
 
     return res.status(200).json({
       jobTitle: jobPost.jobTitle,
@@ -307,6 +336,7 @@ exports.getJobApplicants = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch applicants", error: error.message });
   }
 };
+
 
 exports.updateApplicantStatus = async (req, res) => {
   try {

@@ -12,6 +12,14 @@ const applicantSchema = new mongoose.Schema(
     offerLetter: {
       type: Boolean,
       default: false
+    },
+    interviewScheduled: {
+      type: Boolean,
+      default: false
+    },
+    interviewCompleted: {
+      type: Boolean,
+      default: false
     }
   },
   { _id: false }
