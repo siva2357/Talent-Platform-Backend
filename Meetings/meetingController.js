@@ -1,127 +1,89 @@
 const MeetingEvent = require('./meetingModel');
 const mongoose = require("mongoose");
-const axios = require("axios");
-
-// exports.createMeeting = async (req, res) => {
-//   try {
-//     const { userId, role } = req.user || {};
-    
-//     if (role !== 'client') {
-//       return res.status(403).json({ success: false, message: "Only clients can create meetings" });
-//     }
-
-//     const meetingData = {
-//       ...req.body,
-//       clientId: new mongoose.Types.ObjectId(userId),
-//       deleted: false  // Ensure it's not soft-deleted on create
-//     };
-
-//     const newMeeting = await MeetingEvent.create(meetingData);
-
-//     return res.status(201).json({
-//       success: true,
-//       message: "Meeting created successfully",
-//       meeting: newMeeting
-//     });
-//   } catch (err) {
-//     console.error("Create meeting error:", err);
-//     return res.status(500).json({ success: false, message: "Internal server error" });
-//   }
-// };
-
-
+const { sendNotification } = require("../Middleware/notificationHelper"); 
+const JobPost = require('../JobPosts/jobPostModel');
+const Freelancer = require('../Authentication/freelancerModel');
+const { v4: uuidv4 } = require('uuid');
 
 exports.createMeeting = async (req, res) => {
   try {
     const { userId, role } = req.user || {};
+    const { freelancerId, startTime, endTime, meetingJoinUrl, jobId } = req.body;
 
-    if (role !== "client") {
+    if (role !== 'client') {
       return res.status(403).json({ success: false, message: "Only clients can create meetings" });
     }
-    const zoomAccessToken = await getZoomAccessToken();
-    const zoomMeetingPayload = {
-      topic: req.body.eventTitle,
-      type: 2, // Scheduled meeting
-      start_time: req.body.startTime, // ISO string
-      duration: Math.ceil((new Date(req.body.endTime) - new Date(req.body.startTime)) / 60000), // in minutes
-      timezone: "UTC",
-      settings: {
-        host_video: true,
-        participant_video: true,
-        waiting_room: true,
-      },
-    };
 
-    // Call Zoom API to create meeting for the user (host)
-    const zoomResponse = await axios.post(
-      `https://api.zoom.us/v2/users/me/meetings`,
-      zoomMeetingPayload,
-      {
-        headers: {
-          Authorization: `Bearer ${zoomAccessToken}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const job = await JobPost.findOne({ _id: jobId, clientId: userId });
+    if (!job) {
+      return res.status(400).json({ success: false, message: "Invalid job ID or you don't own this job" });
+    }
 
-    const zoomMeetingData = zoomResponse.data;
-    const meetingData = {
-      clientId: new mongoose.Types.ObjectId(userId),
-      clientName: req.body.clientName, // pass from frontend or get from DB
-      freelancerId: new mongoose.Types.ObjectId(req.body.freelancerId),
-      freelancerName: req.body.freelancerName,
-      eventTitle: req.body.eventTitle,
-      startTime: req.body.startTime,
-      endTime: req.body.endTime,
-      meetingId: zoomMeetingData.id.toString(),
-      meetingJoinUrl: zoomMeetingData.join_url,
-      status: "Scheduled",
-      deleted: false,
-    };
+const freelancer = await Freelancer.findById(freelancerId);
+if (!freelancer) return res.status(404).json({ success: false, message: "Freelancer not found" });
+
+const meetingData = {
+  meetingId: uuidv4(),
+  clientId: userId,
+  clientName: req.user.name || 'Client',
+  freelancerId: freelancerId,
+  freelancerName: freelancer.registrationDetails.fullName, // fixed
+  jobId: job.jobId,
+  jobTitle: job.jobTitle,
+  startTime,
+  endTime,
+  meetingJoinUrl,
+  status: "Scheduled"
+};
 
     const newMeeting = await MeetingEvent.create(meetingData);
 
+    await sendNotification({
+      userId: newMeeting.freelancerId,
+      userType: "Freelancer",
+      title: "New Meeting Scheduled",
+      message: `${newMeeting.clientName} has scheduled a meeting for your job: ${newMeeting.jobTitle} at ${newMeeting.startTime}`,
+      link: `${newMeeting.meetingJoinUrl}`
+    });
+
     return res.status(201).json({
       success: true,
-      message: "Meeting created successfully",
-      meeting: newMeeting,
+      message: "Meeting created successfully and freelancer notified",
+      meeting: newMeeting
     });
+
   } catch (err) {
-    console.error("Create meeting error:", err.response?.data || err.message);
+    console.error("Create meeting error:", err);
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
 
-exports.getAllMeetings = async (req, res) => {
+
+exports.getAllMeetingsByClient = async (req, res) => {
   try {
-    const { userId, role } = req.user || {};
-
-    if (!userId || !role) {
-      return res.status(400).json({ message: "Missing user identity" });
+    const { userId, role } = req.user;
+    if (role !== "client") {
+      return res.status(403).json({ message: "Only clients can access their meetings" });
     }
 
-    const filter = { deleted: false };
-    if (role === "client") {
-      filter.clientId = new mongoose.Types.ObjectId(userId);
-    } else if (role === "freelancer") {
-      filter.freelancerId = new mongoose.Types.ObjectId(userId);
-    } else {
-      return res.status(403).json({ message: "Unauthorized role" });
-    }
-
-    const meetings = await MeetingEvent.find();
-    return res.status(200).json({ totalMeetings: meetings.length, meetings:meetings });
-  } catch (error) {
-    console.error("Fetch meetings error:", error);
+    const meetings = await MeetingEvent.find({ clientId: userId, deleted: false });
+    return res.status(200).json({ totalMeetings: meetings.length, meetings });
+  } catch (err) {
+    console.error("Fetch client meetings error:", err);
     return res.status(500).json({ message: "Failed to fetch meetings" });
   }
 };
 
 
-exports.getMeetingById = async (req, res) => {
+exports.getMeetingByIdForClient = async (req, res) => {
   try {
-    const meeting = await MeetingEvent.findById(req.params.id);
+    const { userId, role } = req.user;
+    if (role !== "client") {
+      return res.status(403).json({ message: "Only clients can access their meetings" });
+    }
+
+    const meeting = await MeetingEvent.findOne({ _id: req.params.id, clientId: userId, deleted: false });
     if (!meeting) return res.status(404).json({ message: "Meeting not found" });
 
     return res.status(200).json({ success: true, meeting });
@@ -131,13 +93,60 @@ exports.getMeetingById = async (req, res) => {
   }
 };
 
+// -------------------- FREELANCER --------------------
+
+exports.getAllMeetingsByFreelancer = async (req, res) => {
+  try {
+    const { userId, role } = req.user;
+    if (role !== "freelancer") {
+      return res.status(403).json({ message: "Only freelancers can access their meetings" });
+    }
+
+    const meetings = await MeetingEvent.find({ freelancerId: userId});
+    return res.status(200).json({ totalMeetings: meetings.length, meetings });
+  } catch (err) {
+    console.error("Fetch freelancer meetings error:", err);
+    return res.status(500).json({ message: "Failed to fetch meetings" });
+  }
+};
+
+// Get a single meeting by ID (freelancer)
+exports.getMeetingByIdForFreelancer = async (req, res) => {
+  try {
+    const { userId, role } = req.user;
+    if (role !== "freelancer") {
+      return res.status(403).json({ message: "Only freelancers can access their meetings" });
+    }
+
+    const meeting = await MeetingEvent.findOne({ _id: req.params.id, freelancerId: userId });
+    if (!meeting) return res.status(404).json({ message: "Meeting not found" });
+
+    return res.status(200).json({ success: true, meeting });
+  } catch (err) {
+    console.error("Get freelancer meeting by ID error:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
 
 exports.updateMeetingById = async (req, res) => {
   try {
     const { userId, role } = req.user || {};
+    const { jobId, startTime, endTime, meetingJoinUrl } = req.body;
 
     if (role !== 'client') {
       return res.status(403).json({ message: "Only clients can update meetings" });
+    }
+
+    // If jobId is being updated, validate ownership
+    if (jobId) {
+      const job = await JobPost.findOne({ _id: jobId, clientId: userId });
+      if (!job) {
+        return res.status(400).json({ message: "Invalid job ID or you don't own this job" });
+      }
+      req.body.jobTitle = job.title; // auto-update jobTitle
     }
 
     const updatedMeeting = await MeetingEvent.findOneAndUpdate(
@@ -150,7 +159,17 @@ exports.updateMeetingById = async (req, res) => {
       return res.status(404).json({ message: "Meeting not found or unauthorized" });
     }
 
+    // Notify freelancer about the update
+    await sendNotification({
+      userId: updatedMeeting.freelancerId,
+      userType: "Freelancer",
+      title: "Meeting Updated",
+      message: `${updatedMeeting.clientName} has updated the meeting for job: ${updatedMeeting.jobTitle}. New time: ${updatedMeeting.startTime}`,
+      link: `${updatedMeeting.meetingJoinUrl}`
+    });
+
     return res.status(200).json({ success: true, meeting: updatedMeeting });
+
   } catch (err) {
     console.error("Update meeting error:", err);
     return res.status(500).json({ message: "Update failed" });

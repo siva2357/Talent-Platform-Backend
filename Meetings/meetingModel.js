@@ -6,7 +6,8 @@ const meetingEventSchema = new mongoose.Schema({
   clientName: { type: String, required: true },
   freelancerId: { type: mongoose.Schema.Types.ObjectId, ref: "Freelancer", required: true },
   freelancerName: { type: String, required: true },
-  eventTitle: { type: String, required: true },
+  jobId: { type: String, required: true },
+  jobTitle: { type: String, required: true },
   startTime: { type: Date, required: true },
   endTime: { type: Date, required: true },
   meetingJoinUrl: { type: String, required: true },
@@ -15,7 +16,6 @@ const meetingEventSchema = new mongoose.Schema({
     enum: ["Scheduled", "Completed", "Pending", "Not Completed"],
     default: "Scheduled"
   },
-  deleted: { type: Boolean, default: false },
 }, { timestamps: true });
 
 module.exports = mongoose.model("MeetingEvent", meetingEventSchema);
