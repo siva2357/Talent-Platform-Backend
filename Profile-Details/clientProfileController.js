@@ -1,5 +1,6 @@
 const Client = require('../Authentication/clientModel');
 const ClientProfile = require('../Profile-Details/clientProfileModel');
+const JobPost = require("../JobPosts/jobPostModel");
 
 
 exports.createClientProfile = async (req, res) => {
@@ -134,21 +135,35 @@ exports.getClientById = async (req, res) => {
 };
 
 
-exports.deleteClientById = async (req, res) => {
+exports.deleteClientAccount = async (req, res) => {
   try {
-    const clientId = req.params.clientId;
-    const found = await Client.findById(clientId);
-    if (!found) return res.status(404).json({ message: "Client not found" });
+    const { userId, role } = req.user;
 
-    await ClientProfile.deleteMany({ clientId });
-    await Client.findByIdAndDelete(clientId);
+    if (role !== "client") {
+      return res.status(403).json({ message: "Only clients can delete their own account" });
+    }
 
-    res.status(200).json({ message: "Client and profile deleted" });
+    // 1️⃣ Check if client exists
+    const found = await Client.findById(userId);
+    if (!found) {
+      return res.status(404).json({ message: "Client not found" });
+    }
+
+    // 2️⃣ Delete client profile
+    await ClientProfile.deleteMany({ clientId: userId });
+
+    // 3️⃣ Delete all job posts by client
+    await JobPost.deleteMany({ clientId: userId });
+
+    // 4️⃣ Delete client account
+    await Client.findByIdAndDelete(userId);
+
+    return res.status(200).json({ message: "Account, profile, and all job posts deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error deleting client account:", error);
+    return res.status(500).json({ message: error.message });
   }
 };
-
 
 exports.getClientBasicDetails = async (req, res) => {
   try {
@@ -316,7 +331,7 @@ exports.updateSocialMedia = async (req, res) => {
   }
 };
 
-// PROFILE PICTURE
+
 exports.getClientProfilePicture = async (req, res) => {
   try {
     const clientId = req.params.clientId;
@@ -350,3 +365,77 @@ exports.updateClientProfilePicture = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+exports.getMyFullProfile = async (req, res) => {
+  try {
+    const { userId, role } = req.user;
+
+    if (role !== "client") {
+      return res.status(403).json({
+        success: false,
+        message: "Only clients can access their full profile"
+      });
+    }
+
+    // Client details
+    const client = await Client.findById(userId)
+      .select(
+        "registrationDetails.fullName registrationDetails.email registrationDetails.verified createdAt updatedAt -_id"
+      )
+      .lean();
+
+    if (!client) {
+      return res.status(404).json({ success: false, message: "Client not found" });
+    }
+
+    // Profile details
+    const profileDoc = await ClientProfile.findOne({ clientId: userId })
+      .select("-_id -clientId -__v")
+      .lean();
+
+    let flatProfile = {};
+    if (profileDoc) {
+      // Flatten the structure
+      flatProfile = {
+        ...(profileDoc.profileDetails || {}),
+        createdAt: profileDoc.createdAt,
+        updatedAt: profileDoc.updatedAt
+      };
+
+      // Remove `_id` from each socialMedia entry
+      if (Array.isArray(flatProfile.socialMedia)) {
+        flatProfile.socialMedia = flatProfile.socialMedia.map(({ _id, ...rest }) => rest);
+      }
+    }
+
+    // Job posts
+    const jobPosts = await JobPost.find({ clientId: userId })
+      .select(
+        "jobId jobTitle jobType totalApplicants location status postedOn updatedAt -_id"
+      )
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: [
+        {
+          clientDetails: client,
+          profileDetails: flatProfile,
+          jobPosts
+        }
+      ]
+    });
+  } catch (error) {
+    console.error("Error fetching client profile:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching profile",
+      error: error.message
+    });
+  }
+};
+
+
+
+

@@ -344,9 +344,23 @@ exports.getTalentById = async (req, res) => {
     console.log(`Fetching talent with ID: ${talentId}`);
 
     // 1. Get freelancer profile
-    const profile = await FreelancerProfile.findOne({ freelancerId: talentId }).lean();
-    if (!profile) {
-      console.warn(`Talent profile not found for ID: ${talentId}`);
+    const profileDoc = await FreelancerProfile.findOne({ freelancerId: talentId })
+      .select("-_id -freelancerId -__v")
+      .lean();
+
+    let flatProfile = {};
+    if (profileDoc) {
+      flatProfile = {
+        ...(profileDoc.profileDetails || {}),
+        createdAt: profileDoc.createdAt,
+        updatedAt: profileDoc.updatedAt
+      };
+
+      // Remove `_id` from each socialMedia entry
+      if (Array.isArray(flatProfile.socialMedia)) {
+        flatProfile.socialMedia = flatProfile.socialMedia.map(({ _id, ...rest }) => rest);
+      }
+    } else {
       return res.status(404).json({
         success: false,
         message: "Talent profile not found"
@@ -354,15 +368,21 @@ exports.getTalentById = async (req, res) => {
     }
 
     // 2. Get freelancer portfolio
-    const portfolio = await Portfolio.find({ freelancerId: talentId }).lean();
+    let portfolio = await Portfolio.find({ freelancerId: talentId })
+      .select("-_id -freelancerId -__v")
+      .lean();
 
-    console.log(`Profile found: ${profile.profileDetails.fullName}`);
+    console.log(`Profile found: ${flatProfile.fullName}`);
     console.log(`Portfolio projects found: ${portfolio.length}`);
 
     return res.status(200).json({
       success: true,
-      profile,
-      portfolio
+      talentProfile: [
+        {
+          profileDetails: flatProfile,
+          portfolio
+        }
+      ]
     });
   } catch (error) {
     console.error("Error fetching talent by ID:", error);
@@ -372,6 +392,8 @@ exports.getTalentById = async (req, res) => {
     });
   }
 };
+
+
 
 
 

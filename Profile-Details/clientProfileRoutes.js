@@ -6,6 +6,9 @@ const { identifier } = require('../Middleware/identification');
 
 // ✅ Consistent usage of :clientId
 router.post('/client/profile-details', identifier, clientProfileController.createClientProfile);
+router.get("/client/complete-profile", identifier, clientProfileController.getMyFullProfile);
+router.delete('/client/delete-account', identifier, clientProfileController.deleteClientAccount);
+
 router.put('/client/:clientId/profile-details', identifier, clientProfileController.updateClientProfile);
 router.get('/client/:clientId/profile-details', identifier, clientProfileController.getClientProfile);
 router.get('/client/:clientId/profile-settings', identifier, clientProfileController.getClientById);
@@ -20,7 +23,5 @@ router.put('/client/:clientId/profile/picture', identifier, clientProfileControl
 router.get('/client/:clientId/profile/social-media', identifier, clientProfileController.getClientSocialMedia);
 router.put('/client/:clientId/profile/social-media', identifier, clientProfileController.updateSocialMedia);
 
-// Delete client profile
-router.delete('/auth/client/:clientId/delete', identifier, clientProfileController.deleteClientById);
 
 module.exports = router;

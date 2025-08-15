@@ -11,7 +11,7 @@ router.get('/freelancer/:freelancerId/profile-details', identifier, freelancerPr
 
 
 router.get('/client/talents', identifier, freelancerProfileController.getAllTalents);
-router.get('/client/talents/:talentId/profile-details', identifier, freelancerProfileController.getTalentById);
+router.get('/client/talents/:talentId/talent-profile', identifier, freelancerProfileController.getTalentById);
 
 
 // Settings + Header Info
